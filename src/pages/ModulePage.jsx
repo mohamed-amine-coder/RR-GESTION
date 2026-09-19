@@ -1,60 +1,79 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { BookOpen, Sparkles, CheckCircle2, Lock, Layout } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { BookOpen, Sparkles, CheckCircle2, Lock, Layout, X, MessageCircle, TicketCheck } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import LoadingScreen from '../components/common/LoadingScreen';
 
 export default function ModulePage() {
   const { moduleId } = useParams();
+  const navigate = useNavigate();
+  const { user, loading: authLoading, hasActiveModuleAccess } = useAuth();
   const [moduleData, setModuleData] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedChapter, setSelectedChapter] = useState(null);
 
   useEffect(() => {
     const fetchModuleDetails = async () => {
       setLoading(true);
 
-      // 1. نجيبو معلومات الموديل
       const { data: modData } = await supabase
         .from('modules')
         .select('*')
         .eq('id', moduleId)
         .single();
-      
+
       if (modData) setModuleData(modData);
 
-      // 2. نجيبو الفصول ديال هاد الموديل
       const { data: chapsData } = await supabase
         .from('chapters')
         .select('*')
         .eq('module_id', moduleId)
         .order('order_index');
-      
+
       if (chapsData) setChapters(chapsData);
 
-      // 3. نتأكدو واش المستخدم الحالي عندو الحق يشوف الدروس المسدودة
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: access } = await supabase
-          .from('user_access')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .eq('module_id', moduleId)
-          .eq('status', 'active')
-          .maybeSingle();
-        
-        if (access) setIsSubscribed(true);
+      if (user?.id) {
+        const hasAccess = await hasActiveModuleAccess(moduleId);
+        setIsSubscribed(hasAccess);
       }
 
       setLoading(false);
     };
 
+    if (!moduleId) return;
     fetchModuleDetails();
-  }, [moduleId]);
+  }, [moduleId, user?.id, hasActiveModuleAccess]);
 
-  if (loading) {
-    return <div className="min-h-screen bg-[#FBFBF7] flex items-center justify-center font-black text-2xl text-slate-400">جاري التحميل... ⚡</div>;
+  const openPaywall = (chapter) => {
+    setSelectedChapter(chapter);
+  };
+
+  const closePaywall = () => {
+    setSelectedChapter(null);
+  };
+
+  const handleWaitlist = () => {
+    closePaywall();
+    navigate(`/waitlist?offer=single_module&module=${moduleId}`);
+  };
+
+  const handleWhatsApp = () => {
+    if (!selectedChapter) return;
+
+    const message = encodeURIComponent(
+      `السلام عليكم، أريد فتح الفصل "${selectedChapter.title_ar || selectedChapter.title || 'هذا الفصل'}" في الموديل "${moduleData?.title || ''}".`
+    );
+
+    closePaywall();
+    window.open(`https://wa.me/212600000000?text=${message}`, '_blank', 'noopener,noreferrer');
+  };
+
+  if (authLoading || loading) {
+    return <LoadingScreen message="جارٍ تحميل الموديل..." />;
   }
 
   if (!moduleData) {
@@ -151,10 +170,14 @@ export default function ModulePage() {
                     <span>بدا الدرس</span>
                   </Link>
                 ) : (
-                  <div className="px-5 py-2.5 bg-slate-100 text-slate-400 text-xs md:text-sm font-bold rounded-xl flex items-center gap-2 cursor-not-allowed">
+                  <button
+                    type="button"
+                    onClick={() => openPaywall(ch)}
+                    className="px-6 py-2.5 bg-gradient-to-r from-amber-400 to-[#FFB800] hover:from-amber-300 hover:to-amber-400 text-slate-950 text-xs md:text-sm font-black rounded-xl transition shadow-md shadow-amber-200/70 flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                  >
                     <Lock className="w-3.5 h-3.5" />
-                    <span>خاص بالمشتركين</span>
-                  </div>
+                    <span>فتح الدرس 🔒</span>
+                  </button>
                 )}
               </div>
 
@@ -193,6 +216,102 @@ export default function ModulePage() {
            <p className="text-center text-slate-400 font-bold py-8">مزال ماتزادو فصول فهاد الموديل.</p>
         )}
       </div>
+
+      <AnimatePresence>
+        {selectedChapter && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closePaywall}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md px-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 18, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.96 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-lg overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl"
+              dir="rtl"
+            >
+              <div className="bg-[#0B132B] px-5 py-4 text-white">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">محتوى مدفوع ⚡</p>
+                    <h3 className="mt-2 text-xl font-black leading-tight">{selectedChapter.title_ar}</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closePaywall}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
+                    aria-label="إغلاق"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-6 p-6">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-black text-slate-500">الموديل</p>
+                      <p className="mt-1 text-base font-black text-slate-900">{moduleData?.title}</p>
+                    </div>
+                    <div className="rounded-2xl bg-amber-100 px-3 py-2 text-right">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-amber-700">السعر</p>
+                      <p className="text-xl font-black text-slate-900">{moduleData?.price} <span className="text-sm">DH</span></p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-sm font-black text-slate-800">ماذا ستحصل عليه؟</h4>
+                  <ul className="space-y-2.5 text-sm font-bold text-slate-700">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                      <span>ملخصات بالدارجة + شرح مبسط للمفاهيم الأساسية</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                      <span>مفاهيم مشروحة بسهولة مع أمثلة تطبيقية من الواقع</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                      <span>كويزات تفاعلية لتثبيت المعلومة وتقييم المستوى</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={handleWaitlist}
+                    className="flex-1 rounded-2xl bg-[#FFB800] px-4 py-3 text-sm font-black text-slate-950 shadow-md shadow-amber-200/70 transition hover:bg-[#f5ad00]"
+                  >
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <TicketCheck className="h-4 w-4" />
+                      <span>حجز مقعد فاللائحة (Waitlist) 📋</span>
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleWhatsApp}
+                    className="flex-1 rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-black text-slate-900 transition hover:bg-slate-200"
+                  >
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <MessageCircle className="h-4 w-4" />
+                      <span>تواصل معنا فالواتساب 💬</span>
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

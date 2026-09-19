@@ -4,6 +4,7 @@ import { Sparkles, ChevronLeft, BookOpen, Layers } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
 import rrTeamImg from '../assets/rr-team.png';
+import LoadingScreen from '../components/common/LoadingScreen';
 
 export default function Modules() {
   const [modules, setModules] = useState([]);
@@ -29,7 +30,7 @@ export default function Modules() {
     : modules.filter(m => m.semestre === selectedSemestre);
 
   if (loading) {
-    return <div className="min-h-screen bg-[#FBFBF7] flex items-center justify-center font-black text-2xl text-slate-400">جاري التحميل... ⚡</div>;
+    return <LoadingScreen message="جارٍ تحميل الموديلات..." />;
   }
 
   return (

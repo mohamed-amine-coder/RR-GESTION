@@ -2,22 +2,20 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Zap, GraduationCap, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
+  const { signInWithGoogle } = useAuth();
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/modules`
-      }
-    });
-    
-    if (error) {
+
+    try {
+      await signInWithGoogle();
+    } catch (error) {
       console.error('Error logging in:', error.message);
+    } finally {
       setLoading(false);
     }
   };

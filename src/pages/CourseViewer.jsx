@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Sparkles, 
-  Lightbulb, 
-  AlertTriangle, 
-  CheckCircle2, 
-  XCircle, 
-  Headphones, 
-  Play, 
-  X, 
+import {
+  Sparkles,
+  Lightbulb,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Headphones,
+  Play,
+  X,
   ArrowLeftRight,
   KeyRound,
   Languages,
@@ -19,11 +19,14 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import rrTeamImg from '../assets/rr-team.png';
+import LoadingScreen from '../components/common/LoadingScreen';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function CourseViewer() {
   const { chapterId } = useParams();
   const navigate = useNavigate();
-  
+  const { user, hasActiveModuleAccess, loading: authLoading } = useAuth();
+
   const [slides, setSlides] = useState([]);
   const [moduleId, setModuleId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,14 +42,33 @@ export default function CourseViewer() {
         setLoading(false);
         return;
       }
-      
+
       const { data: chapData } = await supabase
         .from('chapters')
-        .select('module_id')
+        .select('id, module_id, is_free')
         .eq('id', chapterId)
         .single();
-      
-      if (chapData) setModuleId(chapData.module_id);
+
+      if (!chapData) {
+        setLoading(false);
+        return;
+      }
+
+      const nextModuleId = chapData.module_id;
+      setModuleId(nextModuleId);
+
+      if (!chapData.is_free) {
+        if (!user) {
+          navigate('/login', { replace: true });
+          return;
+        }
+
+        const hasAccess = await hasActiveModuleAccess(nextModuleId);
+        if (!hasAccess) {
+          navigate(`/module/${nextModuleId}`, { replace: true });
+          return;
+        }
+      }
 
       const { data, error } = await supabase
         .from('slides')
@@ -55,7 +77,7 @@ export default function CourseViewer() {
         .order('order_index');
 
       if (error) {
-        console.error("Error fetching slides:", error);
+        console.error('Error fetching slides:', error);
       } else if (data) {
         setSlides(data.map(item => item.content));
       }
@@ -63,10 +85,10 @@ export default function CourseViewer() {
     };
 
     fetchChapterData();
-  }, [chapterId]);
+  }, [chapterId, hasActiveModuleAccess, navigate, user]);
 
-  if (loading) {
-    return <div className="min-h-screen bg-[#FBFBF7] flex items-center justify-center font-black text-2xl text-slate-400">جاري تحميل الدرس... ⚡</div>;
+  if (authLoading || loading) {
+    return <LoadingScreen message="جارٍ تحميل الدرس..." />;
   }
 
   if (slides.length === 0) {
