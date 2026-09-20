@@ -1,28 +1,28 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Layers, Users, Save, Search, CheckCircle2, FolderPlus, PlusCircle } from 'lucide-react';
+import { Layers, Users, Save, Search, CheckCircle2, FolderPlus, PlusCircle, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('structure'); // 'structure' | 'lessons' | 'access'
+  const [activeTab, setActiveTab] = useState('smart_lesson'); // 'smart_lesson' | 'structure' | 'access'
   
   // Data States
   const [modules, setModules] = useState([]);
   const [chapters, setChapters] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [activeAccessMap, setActiveAccessMap] = useState({});
-  
-  // Tab 1: Structure (Modules & Chapters) States
-  const [newMod, setNewMod] = useState({ id: '', title: '', description: '', semestre: 'S1', price: 0 });
-  const [newChap, setNewChap] = useState({ module_id: '', title_ar: '', title_fr: '', badge: '', is_free: false });
   const [loadingAction, setLoadingAction] = useState(false);
 
-  // Tab 2: Lessons States
-  const [selectedModule, setSelectedModule] = useState('');
-  const [selectedChapter, setSelectedChapter] = useState('');
-  const [jsonInput, setJsonInput] = useState('');
-  const [parsedSlides, setParsedSlides] = useState([]);
+  // Tab 1: Smart Direct Lesson Upload (الحل السريع)
+  const [targetModuleId, setTargetModuleId] = useState('');
+  const [smartJsonInput, setSmartJsonInput] = useState('');
+  const [smartParsedData, setSmartParsedData] = useState(null);
 
-  // Tab 3: Access States
+  // Tab 2: Structure (Manual Modules & Chapters)
+  const [newMod, setNewMod] = useState({ id: '', title: '', description: '', semestre: 'S1', price: 0 });
+  const [newChap, setNewChap] = useState({ module_id: '', title_ar: '', title_fr: '', badge: '', is_free: false });
+
+  // Tab 3: Access
   const [searchTerm, setSearchTerm] = useState('');
   const [accessModule, setAccessModule] = useState('');
 
@@ -31,19 +31,9 @@ export default function AdminDashboard() {
     fetchProfiles();
   }, []);
 
-  useEffect(() => {
-    if (selectedModule) fetchChapters(selectedModule);
-    else setChapters([]);
-  }, [selectedModule]);
-
   const fetchModules = async () => {
     const { data } = await supabase.from('modules').select('*').order('order_index');
     if (data) setModules(data);
-  };
-
-  const fetchChapters = async (moduleId) => {
-    const { data } = await supabase.from('chapters').select('*').eq('module_id', moduleId).order('order_index');
-    if (data) setChapters(data);
   };
 
   const fetchProfiles = async () => {
@@ -72,14 +62,114 @@ export default function AdminDashboard() {
     }
   };
 
-  // --- ACTIONS: Structure ---
+  // ================= SMART INSTANT UPLOAD LOGIC =================
+  const handleSmartPreview = () => {
+    try {
+      const parsed = JSON.parse(smartJsonInput);
+
+      if (!parsed.title_ar || !Array.isArray(parsed.slides)) {
+        return alert('الـ JSON خاصو ضروري يحتوي على title_ar ومصفوفة slides!');
+      }
+
+      setSmartParsedData(parsed);
+    } catch (err) {
+      alert('خطأ فـ بنية الـ JSON، تأكد من الفواصل والـ Syntax!');
+    }
+  };
+
+  const handleSaveSmartLesson = async () => {
+    if (!targetModuleId) return alert('المرجو اختيار الموديل أولاً!');
+    if (!smartParsedData) return alert('المرجو الضغط على زر معاينة الـ JSON أولاً!');
+
+    setLoadingAction(true);
+
+    try {
+      const { title_ar, title_fr = '', badge = '', is_free = false, slides = [] } = smartParsedData;
+
+      // 1. التحقق واش الفصل ديجا كاين فهاد الموديل
+      const { data: existingChapters, error: searchError } = await supabase
+        .from('chapters')
+        .select('*')
+        .eq('module_id', targetModuleId)
+        .eq('title_ar', title_ar.trim());
+
+      if (searchError) throw searchError;
+
+      let chapterId = null;
+
+      if (existingChapters && existingChapters.length > 0) {
+        const found = existingChapters[0];
+        const confirmUpdate = window.confirm(
+          `هاد الفصل "${title_ar}" ديجا كاين فهاد الموديل!\n\nواش باغي تستبدل السلايدات ديالو بالسلايدات الجداد؟\n(OK = استبدال السلايدات، Cancel = إلغاء باش تبدل العنوان)`
+        );
+
+        if (!confirmUpdate) {
+          setLoadingAction(false);
+          return;
+        }
+
+        chapterId = found.id;
+        // تحديث معلومات الفصل الاختيارية
+        await supabase
+          .from('chapters')
+          .update({ title_fr, badge, is_free })
+          .eq('id', chapterId);
+      } else {
+        // 2. إنشاء فصل جديد مع حساب order_index تلقائياً
+        const { count } = await supabase
+          .from('chapters')
+          .select('*', { count: 'exact' })
+          .eq('module_id', targetModuleId);
+
+        const order_index = (count || 0) + 1;
+
+        const { data: newChapterData, error: createError } = await supabase
+          .from('chapters')
+          .insert([{
+            module_id: targetModuleId,
+            title_ar: title_ar.trim(),
+            title_fr: title_fr.trim(),
+            badge: badge.trim(),
+            is_free: Boolean(is_free),
+            order_index
+          }])
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        chapterId = newChapterData.id;
+      }
+
+      // 3. تجهيز وحفظ السلايدات
+      const slidesToInsert = slides.map((slide, index) => ({
+        chapter_id: chapterId,
+        type: slide.type,
+        content: slide,
+        order_index: index + 1
+      }));
+
+      // مسح السلايدات القدام إذا كان تحديث
+      await supabase.from('slides').delete().eq('chapter_id', chapterId);
+      
+      const { error: insertSlidesError } = await supabase.from('slides').insert(slidesToInsert);
+      if (insertSlidesError) throw insertSlidesError;
+
+      alert(`✅ تم حفظ الفصل "${title_ar}" و ${slides.length} سلايد بنجاح!`);
+      setSmartJsonInput('');
+      setSmartParsedData(null);
+
+    } catch (err) {
+      alert('وقع خطأ: ' + err.message);
+    } finally {
+      setLoadingAction(false);
+    }
+  };
+
+  // ================= MANUAL STRUCTURE ACTIONS =================
   const handleAddModule = async () => {
     if (!newMod.id || !newMod.title) return alert('المرجو إدخال رمز وعنوان الموديل!');
     setLoadingAction(true);
-    
-    // نجيبو اخر order_index باش يجي هو اللخر
     const order_index = modules.length + 1;
-    
     const { error } = await supabase.from('modules').insert([{ ...newMod, order_index }]);
     setLoadingAction(false);
     
@@ -95,8 +185,6 @@ export default function AdminDashboard() {
   const handleAddChapter = async () => {
     if (!newChap.module_id || !newChap.title_ar || !newChap.title_fr) return alert('المرجو ملء المعلومات الأساسية للفصل!');
     setLoadingAction(true);
-    
-    // نجيبو عدد الفصول ديال هاد الموديل باش نعطيو للجديد order_index
     const { count } = await supabase.from('chapters').select('*', { count: 'exact' }).eq('module_id', newChap.module_id);
     const order_index = (count || 0) + 1;
 
@@ -108,43 +196,12 @@ export default function AdminDashboard() {
     } else {
       alert('تزاد الفصل بنجاح!');
       setNewChap({ module_id: '', title_ar: '', title_fr: '', badge: '', is_free: false });
-      if (selectedModule === newChap.module_id) fetchChapters(selectedModule); // refresh if needed
     }
   };
 
-  // --- ACTIONS: Lessons ---
-  const handlePreview = () => {
-    try {
-      const parsed = JSON.parse(jsonInput);
-      setParsedSlides(Array.isArray(parsed) ? parsed : [parsed]);
-    } catch (err) {
-      alert('Erreur f JSON, t2akd men l formatag!');
-    }
-  };
-
-  const handleSaveSlides = async () => {
-    if (!selectedChapter || parsedSlides.length === 0) return alert('Khtar lfasl w dir preview l JSON 9bel!');
-    setLoadingAction(true);
-    
-    const slidesToInsert = parsedSlides.map((slide, index) => ({
-      chapter_id: selectedChapter,
-      type: slide.type,
-      content: slide,
-      order_index: index + 1
-    }));
-
-    await supabase.from('slides').delete().eq('chapter_id', selectedChapter);
-    const { error } = await supabase.from('slides').insert(slidesToInsert);
-    
-    setLoadingAction(false);
-    if (error) alert('Error: ' + error.message);
-    else alert('Tsayvaw sildes b naja7!');
-  };
-
-  // --- ACTIONS: Access ---
+  // ================= ACCESS MANAGEMENT =================
   const grantAccess = async (userId) => {
-    if (!accessModule) return alert('Khtar lmodule lwel men lfo9!');
-
+    if (!accessModule) return alert('اختار الموديل الأول من الفوق!');
     const alreadyHasAccess = (activeAccessMap[userId] || []).includes(accessModule);
     if (alreadyHasAccess) {
       await revokeAccess(userId);
@@ -152,23 +209,17 @@ export default function AdminDashboard() {
     }
 
     const { error } = await supabase.from('user_access').insert([{ user_id: userId, module_id: accessModule, status: 'active' }]);
-
     if (error) {
-      if (error.code === '23505') {
-        alert('Had ttalib dija mfa3el 3ndo had lmodule!');
-      } else {
-        alert('Error: ' + error.message);
-      }
+      alert(error.code === '23505' ? 'هاد الطالب مفعل عندو هاد الموديل من قبل!' : 'Error: ' + error.message);
       return;
     }
 
-    alert('Tf3al lmodule l had talib b naja7!');
+    alert('تفعل الموديل لهاد الطالب بنجاح!');
     fetchProfiles();
   };
 
   const revokeAccess = async (userId) => {
-    if (!accessModule) return alert('Khtar lmodule lwel men lfo9!');
-
+    if (!accessModule) return alert('اختار الموديل الأول من الفوق!');
     const { error } = await supabase
       .from('user_access')
       .delete()
@@ -181,7 +232,7 @@ export default function AdminDashboard() {
       return;
     }
 
-    alert('T7awel lmodule mn luser b naja7!');
+    alert('تم إلغاء التفعيل بنجاح!');
     fetchProfiles();
   };
 
@@ -197,18 +248,26 @@ export default function AdminDashboard() {
         {/* Navigation Tabs */}
         <div className="flex items-center justify-between border-b border-slate-200 px-4">
           <div className="flex overflow-x-auto">
-            <button onClick={() => setActiveTab('structure')} className={`min-w-[150px] py-4 font-black flex items-center justify-center gap-2 ${activeTab === 'structure' ? 'border-b-2 border-[#0F172A] text-slate-900' : 'text-slate-500'}`}>
-              <FolderPlus className="w-5 h-5" /> إضافة الموديلات للفصول
+            <button 
+              onClick={() => setActiveTab('smart_lesson')} 
+              className={`min-w-[170px] py-4 font-black flex items-center justify-center gap-2 ${activeTab === 'smart_lesson' ? 'border-b-2 border-amber-500 text-slate-900 bg-amber-50/50' : 'text-slate-500'}`}
+            >
+              <Zap className="w-5 h-5 text-amber-500 fill-current" /> إضافة فصل وسلايدات فورياً
             </button>
-            <button onClick={() => setActiveTab('lessons')} className={`min-w-[150px] py-4 font-black flex items-center justify-center gap-2 ${activeTab === 'lessons' ? 'border-b-2 border-[#0F172A] text-slate-900' : 'text-slate-500'}`}>
-              <Layers className="w-5 h-5" /> إضافة الدروس (JSON)
+            <button 
+              onClick={() => setActiveTab('structure')} 
+              className={`min-w-[150px] py-4 font-black flex items-center justify-center gap-2 ${activeTab === 'structure' ? 'border-b-2 border-[#0F172A] text-slate-900' : 'text-slate-500'}`}
+            >
+              <FolderPlus className="w-5 h-5" /> إدارة الهيكلة يدوياً
             </button>
-            <button onClick={() => setActiveTab('access')} className={`min-w-[150px] py-4 font-black flex items-center justify-center gap-2 ${activeTab === 'access' ? 'border-b-2 border-[#0F172A] text-slate-900' : 'text-slate-500'}`}>
+            <button 
+              onClick={() => setActiveTab('access')} 
+              className={`min-w-[150px] py-4 font-black flex items-center justify-center gap-2 ${activeTab === 'access' ? 'border-b-2 border-[#0F172A] text-slate-900' : 'text-slate-500'}`}
+            >
               <Users className="w-5 h-5" /> إدارة الاشتراكات
             </button>
           </div>
 
-          {/* زر التحويل لصفحة الوايت ليست */}
           <Link
             to="/admin/waitlist"
             className="px-4 py-2 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 shrink-0 transition"
@@ -220,10 +279,104 @@ export default function AdminDashboard() {
 
         <div className="p-6 md:p-8">
           
-          {/* ================= TAB 1: STRUCTURE ================= */}
+          {/* ================= TAB 1: SMART INSTANT UPLOAD ================= */}
+          {activeTab === 'smart_lesson' && (
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* جهة الإدخال */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-1.5">اختار الموديل المستهدف 🎯</label>
+                  <select 
+                    value={targetModuleId} 
+                    onChange={e => setTargetModuleId(e.target.value)} 
+                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold bg-slate-50 outline-none focus:border-slate-900"
+                  >
+                    <option value="">-- اختار الموديل --</option>
+                    {modules.map(m => <option key={m.id} value={m.id}>{m.title} ({m.semestre})</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-1.5">لصق كود الـ JSON الكامل للفصل هنا 📋</label>
+                  <textarea 
+                    value={smartJsonInput} 
+                    onChange={e => setSmartJsonInput(e.target.value)} 
+                    placeholder='{"title_ar": "...", "title_fr": "...", "badge": "...", "slides": [...]}'
+                    className="w-full h-80 p-4 border-2 border-slate-200 rounded-2xl font-mono text-xs bg-slate-50 outline-none focus:border-slate-900"
+                    dir="ltr"
+                  />
+                </div>
+
+                <button 
+                  onClick={handleSmartPreview} 
+                  className="w-full py-3.5 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-2xl transition cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Layers className="w-4 h-4" />
+                  <span>معاينة محتوى الفصل والسلايدات</span>
+                </button>
+              </div>
+
+              {/* جهة الـ Preview والحفظ الفوري */}
+              <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 flex flex-col h-[520px]">
+                <h3 className="font-black text-base text-slate-900 mb-3 shrink-0 flex items-center justify-between">
+                  <span>معاينة الفصل:</span>
+                  {smartParsedData && (
+                    <span className="text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-black">
+                      جاهز للنشر ✨ ({smartParsedData.slides?.length || 0} سلايد)
+                    </span>
+                  )}
+                </h3>
+
+                {smartParsedData ? (
+                  <div className="space-y-4 mb-4 flex-1 overflow-y-auto pr-1">
+                    <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-2">
+                      <div className="font-black text-slate-900 text-base">{smartParsedData.title_ar}</div>
+                      <div className="text-xs font-mono text-slate-500" dir="ltr">{smartParsedData.title_fr}</div>
+                      <div className="flex gap-2 pt-2">
+                        {smartParsedData.badge && (
+                          <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-2.5 py-1 rounded-lg">
+                            {smartParsedData.badge}
+                          </span>
+                        )}
+                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg ${smartParsedData.is_free ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                          {smartParsedData.is_free ? 'فصل فابور 🟢' : 'فصل مدفوع 🔒'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-xs font-black text-slate-500">تفاصيل السلايدات:</div>
+                      {smartParsedData.slides.map((s, idx) => (
+                        <div key={idx} className="p-3 bg-white border border-slate-200 rounded-xl text-xs flex items-center justify-between">
+                          <span className="font-mono text-[11px] text-slate-400">#{idx + 1}</span>
+                          <span className="font-black text-slate-700">{s.title || s.tag || s.question || s.type}</span>
+                          <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-bold text-slate-600 uppercase">{s.type}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-slate-400 font-bold text-xs gap-2">
+                    <Zap className="w-8 h-8 stroke-[1.5]" />
+                    <span>لصق كود الـ JSON واضغط على المعاينة لتأكيد الفصل.</span>
+                  </div>
+                )}
+
+                <button 
+                  onClick={handleSaveSmartLesson} 
+                  disabled={loadingAction || !smartParsedData} 
+                  className="w-full py-4 bg-[#0F172A] hover:bg-slate-800 disabled:opacity-40 text-white font-black rounded-2xl transition flex items-center justify-center gap-2 cursor-pointer shrink-0 shadow-md"
+                >
+                  <Save className="w-5 h-5 text-amber-400" />
+                  <span>{loadingAction ? 'جاري الحفظ في القاعدة...' : 'حفظ ونشر الفصل مباشرة 🚀'}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ================= TAB 2: MANUAL STRUCTURE ================= */}
           {activeTab === 'structure' && (
             <div className="grid md:grid-cols-2 gap-8">
-              
               {/* فورم إضافة موديل */}
               <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
                 <h3 className="font-black text-xl text-slate-900 mb-4 flex items-center gap-2">
@@ -232,7 +385,7 @@ export default function AdminDashboard() {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">رمز الموديل (ID) بـ لفرونسي بلا إسباس</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">رمز الموديل (ID)</label>
                     <input type="text" placeholder="ex: mngt-s1" value={newMod.id} onChange={e => setNewMod({...newMod, id: e.target.value})} className="w-full p-3 border rounded-xl font-bold outline-none" dir="ltr" />
                   </div>
                   <div>
@@ -264,14 +417,14 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              {/* فورم إضافة فصل */}
+              {/* فورم إضافة فصل يدوياً */}
               <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
                 <h3 className="font-black text-xl text-slate-900 mb-4 flex items-center gap-2">
-                  <Layers className="text-sky-500" /> زيد فصل جديد
+                  <Layers className="text-sky-500" /> زيد فصل يدوي
                 </h3>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">اختار الموديل لي تابع ليه</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">اختار الموديل</label>
                   <select value={newChap.module_id} onChange={e => setNewChap({...newChap, module_id: e.target.value})} className="w-full p-3 border rounded-xl font-bold outline-none">
                     <option value="">-- اختار الموديل --</option>
                     {modules.map(m => <option key={m.id} value={m.id}>{m.title}</option>)}
@@ -290,7 +443,7 @@ export default function AdminDashboard() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">شارة (Badge) - اختياري</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">شارة (Badge)</label>
                     <input type="text" placeholder="درس مهم" value={newChap.badge} onChange={e => setNewChap({...newChap, badge: e.target.value})} className="w-full p-3 border rounded-xl font-bold outline-none" />
                   </div>
                   <div className="flex items-center mt-6">
@@ -303,59 +456,6 @@ export default function AdminDashboard() {
 
                 <button onClick={handleAddChapter} disabled={loadingAction} className="w-full py-3 bg-[#0F172A] hover:bg-slate-800 disabled:opacity-50 text-white font-black rounded-xl transition flex items-center justify-center gap-2">
                   <PlusCircle className="w-5 h-5" /> حفظ الفصل
-                </button>
-              </div>
-
-            </div>
-          )}
-
-          {/* ================= TAB 2: LESSONS ================= */}
-          {activeTab === 'lessons' && (
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Jiha dyal idakhal (Form) */}
-              <div className="space-y-4">
-                <select value={selectedModule} onChange={e => setSelectedModule(e.target.value)} className="w-full p-3 border rounded-xl font-bold bg-slate-50 outline-none">
-                  <option value="">-- اختار الموديل --</option>
-                  {modules.map(m => <option key={m.id} value={m.id}>{m.title}</option>)}
-                </select>
-                
-                <select value={selectedChapter} onChange={e => setSelectedChapter(e.target.value)} disabled={!selectedModule} className="w-full p-3 border rounded-xl font-bold bg-slate-50 outline-none disabled:opacity-50">
-                  <option value="">-- اختار الفصل --</option>
-                  {chapters.map(c => <option key={c.id} value={c.id}>{c.title_ar}</option>)}
-                </select>
-
-                <textarea 
-                  value={jsonInput} 
-                  onChange={e => setJsonInput(e.target.value)} 
-                  placeholder="Lse9 JSON dyal slides hna (Array dyal objects)..."
-                  className="w-full h-64 p-4 border rounded-xl font-mono text-sm bg-slate-50 outline-none"
-                  dir="ltr"
-                />
-                <button onClick={handlePreview} className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-900 font-black rounded-xl transition cursor-pointer">
-                  Preview JSON
-                </button>
-              </div>
-
-              {/* Jiha dyal Preview w Save */}
-              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col h-[500px]">
-                <h3 className="font-black mb-4 shrink-0">Preview ({parsedSlides.length} slides):</h3>
-                
-                <div className="space-y-4 mb-6 flex-1 overflow-y-auto pr-2">
-                  {parsedSlides.map((slide, i) => (
-                    <div key={i} className="p-4 bg-white border border-slate-200 rounded-xl">
-                      <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-md mb-2 inline-block">
-                        Type: {slide.type}
-                      </span>
-                      <pre className="text-[11px] font-mono text-slate-700 whitespace-pre-wrap" dir="ltr">
-                        {JSON.stringify(slide, null, 2)}
-                      </pre>
-                    </div>
-                  ))}
-                  {parsedSlides.length === 0 && <p className="text-sm font-bold text-slate-400 text-center mt-10">Makayn ta slide l preview.</p>}
-                </div>
-                
-                <button onClick={handleSaveSlides} disabled={loadingAction || parsedSlides.length === 0} className="w-full py-3 bg-[#0F172A] hover:bg-slate-800 disabled:opacity-50 text-white font-black rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shrink-0">
-                  <Save className="w-5 h-5" /> {loadingAction ? 'Kaysayvi...' : 'حفظ الدروس في القاعدة'}
                 </button>
               </div>
             </div>
@@ -410,14 +510,12 @@ export default function AdminDashboard() {
                               {(profile.active_modules || []).length > 0 ? (
                                 (profile.active_modules || []).map(moduleId => {
                                   const module = modules.find(m => m.id === moduleId);
-                                  const label = module ? module.title : moduleId;
-
                                   return (
                                     <span
                                       key={`${profile.id}-${moduleId}`}
                                       className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700"
                                     >
-                                      {label}
+                                      {module ? module.title : moduleId}
                                     </span>
                                   );
                                 })
@@ -428,24 +526,15 @@ export default function AdminDashboard() {
                           </td>
                           <td className="p-4 text-center">
                             {!accessModule ? (
-                              <button
-                                disabled
-                                className="px-4 py-2 bg-slate-100 text-slate-400 font-black rounded-lg transition cursor-not-allowed flex items-center gap-1 mx-auto"
-                              >
+                              <button disabled className="px-4 py-2 bg-slate-100 text-slate-400 font-black rounded-lg cursor-not-allowed flex items-center gap-1 mx-auto">
                                 <CheckCircle2 className="w-4 h-4" /> حدد الموديل
                               </button>
                             ) : hasModuleAccess ? (
-                              <button
-                                onClick={() => revokeAccess(profile.id)}
-                                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-black rounded-lg transition flex items-center gap-1 mx-auto cursor-pointer active:scale-95"
-                              >
+                              <button onClick={() => revokeAccess(profile.id)} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-black rounded-lg transition flex items-center gap-1 mx-auto cursor-pointer active:scale-95">
                                 <CheckCircle2 className="w-4 h-4" /> إلغاء التفعيل
                               </button>
                             ) : (
-                              <button
-                                onClick={() => grantAccess(profile.id)}
-                                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-lg transition flex items-center gap-1 mx-auto cursor-pointer active:scale-95"
-                              >
+                              <button onClick={() => grantAccess(profile.id)} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-lg transition flex items-center gap-1 mx-auto cursor-pointer active:scale-95">
                                 <CheckCircle2 className="w-4 h-4" /> تفعيل
                               </button>
                             )}

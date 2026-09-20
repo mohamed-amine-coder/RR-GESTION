@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import LoadingScreen from './components/common/LoadingScreen';
+import ScrollToTop from './components/common/ScrollToTop';
 
 const Home = lazy(() => import('./pages/Home'));
 const Modules = lazy(() => import('./pages/Modules'));
@@ -21,6 +22,7 @@ export default function App() {
   return (
     <AuthProvider>
       <Router>
+        <ScrollToTop />
         <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col justify-between selection:bg-blue-200 selection:text-blue-900 font-[family-name:var(--font-tajawal)]">
           <Navbar />
           <main className="flex-grow">

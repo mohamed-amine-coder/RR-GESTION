@@ -1,66 +1,68 @@
 import { useState } from 'react';
-import { User, Phone, CheckCircle2, Loader2, BookOpen, Package, Layers, ArrowLeft, Send } from 'lucide-react';
+import { User, Phone, CheckCircle2, Loader2, BookOpen, Layers, Sparkles, ArrowLeft, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const offersList = [
   {
-    id: 'pack_complet',
-    title: 'باقة S1 كاملة (Pack Complet)',
-    desc: 'جميع الموديلات الـ 6 بتمارينها وسلايداتها',
-    badge: 'الأكثر طلباً 🔥',
-    icon: Package
+    id: 'single_module',
+    title: 'موديل واحد فقط (1 Module)',
+    desc: 'اختيار مادة واحدة كتعاني فيها (Comptabilité أو Droit...)',
+    badge: null,
+    icon: BookOpen
   },
   {
-    id: 'pack_besties',
-    title: 'عرض الرفاق (Besties)',
-    desc: 'اشتراك لـ 3 ديال الطلبة مع تخفيض 20 DH للواحد',
-    badge: 'توفير جماعي ✨',
+    id: 'pack_3_modules',
+    title: '3 ديال الموديلات (3 Modules)',
+    desc: 'التركيز على المواد الأساسية مع تخفيض مخصص',
+    badge: 'الأكثر توفيراً ⚡',
     icon: Layers
   },
   {
-    id: 'single_module',
-    title: 'موديل واحد فقط',
-    desc: 'اختيار مادة معينة (Comptabilité أو Droit...)',
-    badge: null,
-    icon: BookOpen
+    id: 'pack_complet',
+    title: 'أكثر / باقة S1 كاملة (Pack Complet)',
+    desc: 'جميع الموديلات المقررة بدروسها وسلايداتها كاملة',
+    badge: 'الشامل 🔥',
+    icon: Sparkles
   }
 ];
 
 export default function Waitlist() {
-  const [selectedOffer, setSelectedOffer] = useState('pack_complet');
+  const [selectedOffer, setSelectedOffer] = useState('pack_3_modules');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [status, setStatus] = useState('idle'); // idle | loading | success
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setStatus('loading');
+    e.preventDefault();
+    setStatus('loading');
+    setErrorMessage('');
 
-  try {
-    const { error } = await supabase
-      .from('waitlist')
-      .insert([
-        {
-          full_name: fullName.trim(),
-          phone: phone.trim(),
-          offer_id: selectedOffer,
-        }
-      ]);
+    try {
+      const { error } = await supabase
+        .from('waitlist')
+        .insert([
+          {
+            full_name: fullName.trim(),
+            phone: phone.trim(),
+            offer_id: selectedOffer,
+          }
+        ]);
 
-    if (error) throw error;
-    setStatus('success');
-  } catch (err) {
-    console.error('Error saving to waitlist:', err.message);
-    alert('وقع خطأ أثناء حفظ البيانات، عاود المحاولة.');
-    setStatus('idle');
-  }
-};
+      if (error) throw error;
+      setStatus('success');
+    } catch (err) {
+      console.error('Error saving to waitlist:', err.message);
+      setErrorMessage(err.message || 'تعذر تسجيل المعطيات، المرجو التأكد من الاتصال.');
+      setStatus('idle');
+    }
+  };
 
   const handleWhatsAppRedirect = () => {
     const offerLabel = offersList.find(o => o.id === selectedOffer)?.title;
-    const msg = encodeURIComponent(`السلام عليكم، أنا ${fullName}، بغيت ناكد تسجيلي فلائحة انتظار RR GESTION بالنسبة لـ: ${offerLabel}`);
+    const msg = encodeURIComponent(`السلام عليكم، أنا ${fullName}، بغيت نأكد تسجيلي فلائحة انتظار RR GESTION بالنسبة لـ: ${offerLabel}`);
     window.open(`https://wa.me/212600000000?text=${msg}`, '_blank');
   };
 
@@ -70,31 +72,39 @@ export default function Waitlist() {
         
         <AnimatePresence mode="wait">
           {status === 'success' ? (
-            /* نافذة تأكيد النجاح */
+            /* نافذة تأكيد النجاح الخالية من أي شك */
             <motion.div
               key="success-card"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white border border-slate-200/80 max-w-lg mx-auto p-8 md:p-12 rounded-[2.5rem] shadow-xl text-center"
+              className="bg-white border-2 border-emerald-500 max-w-lg mx-auto p-8 md:p-12 rounded-[2.5rem] shadow-2xl text-center"
             >
-              <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-emerald-100 shadow-xs">
+              <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
                 <CheckCircle2 className="w-10 h-10 stroke-[2.5]" />
               </div>
-              <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">
-                تم حجز مقعدك بنجاح! 🎉
-              </h2>
-              <p className="text-sm font-bold text-slate-500 mb-2">
-                مرحباً بك معنا يا <span className="text-slate-900 font-black">{fullName}</span>.
+              
+              <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-black rounded-full mb-3">
+                تم التسجيل بنجاح 🟢
+              </span>
+              
+              <h1 className="text-3xl font-black text-slate-900 mb-2">
+                حجزك مؤكد 100%! 🎉
+              </h1>
+              
+              <p className="text-sm font-bold text-slate-600 mb-3">
+                مرحباً بك معنا يا <span className="text-slate-950 font-black">{fullName}</span>.
               </p>
+              
               <p className="text-xs font-bold text-slate-400 mb-8 leading-relaxed">
-                ختارتي: <strong className="text-slate-800">{offersList.find(o => o.id === selectedOffer)?.title}</strong>. غادي نتواصلو معاك فالواتساب أول ما يفتح التسجيل الرسمي للدفعة.
+                الباقة المختارة: <strong className="text-slate-800">{offersList.find(o => o.id === selectedOffer)?.title}</strong>.<br />
+                غادي نتواصلو معاك فالواتساب أول ما تنطلق الدفعة الرسمية.
               </p>
 
               <div className="space-y-3">
                 <button
                   onClick={handleWhatsAppRedirect}
-                  className="w-full py-4 bg-[#22C55E] hover:bg-[#16a34a] text-white font-black rounded-2xl transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                  className="w-full py-4 bg-[#22C55E] hover:bg-[#16a34a] text-white font-black rounded-2xl transition flex items-center justify-center gap-2 shadow-md cursor-pointer active:scale-98"
                 >
                   <Send className="w-4 h-4" />
                   <span>تأكيد الحجز فوراً عبر واتساب</span>
@@ -108,25 +118,25 @@ export default function Waitlist() {
               </div>
             </motion.div>
           ) : (
-            /* الحاوية المزدوجة: مرحلة 1 + مرحلة 2 */
+            /* الحاوية: مرحلة 1 + مرحلة 2 */
             <motion.div
               key="form-container"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-white border border-slate-200/80 rounded-[2.5rem] shadow-xl overflow-hidden flex flex-col md:flex-row"
             >
-              {/* القسم 1: اختيار الباقة */}
+              {/* القسم 1: اختيار الباقة (1 موديل، 3، أو أكثر) */}
               <div className="md:w-1/2 bg-slate-50/70 p-6 md:p-10 border-b md:border-b-0 md:border-l border-slate-200/60 flex flex-col justify-between">
                 <div>
                   <div className="mb-6">
-                    <span className="text-[11px] font-black text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-3">
-                      المرحلة 1 من 2
+                    <span className="text-[11px] font-black text-amber-700 bg-amber-100 px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-3">
+                      الخطوة الأولى
                     </span>
-                    <h2 className="text-xl md:text-2xl font-black text-slate-900 leading-tight">
-                      شنو هو العرض لي باغي تستافد منو؟ 🎯
-                    </h2>
+                    <h1 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">
+                      شحال من موديل باغي توجد ليه؟ 🎯
+                    </h1>
                     <p className="text-xs font-bold text-slate-500 mt-2">
-                      حدد باقتك المفضلة باش نوجدو ليك حسابك بالشكل المناسب.
+                      حدد الخيار المناسب باش نوجدو ليك العرض المخصص لك.
                     </p>
                   </div>
 
@@ -146,8 +156,7 @@ export default function Waitlist() {
                               : 'border-slate-200 bg-white/60 hover:border-slate-300 hover:bg-white text-slate-600'
                           }`}
                         >
-                          {/* أيقونة العرض */}
-                          <div className={`p-3 rounded-xl ml-3 transition-colors ${
+                          <div className={`p-3 rounded-xl ml-3 transition-colors shrink-0 ${
                             isSelected
                               ? 'bg-[#0F172A] text-[#FFB800]'
                               : 'bg-slate-100 text-slate-400'
@@ -155,28 +164,25 @@ export default function Waitlist() {
                             <IconComponent className="w-5 h-5" />
                           </div>
 
-                          {/* نصوص الباقة */}
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
                               <span className={`font-black text-sm md:text-base ${
-                                isSelected ? 'text-slate-900' : 'text-slate-700'
+                                isSelected ? 'text-slate-950' : 'text-slate-700'
                               }`}>
                                 {offer.title}
                               </span>
 
-                              {/* مؤشر الاختيار الدائري */}
-                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mr-2 ${
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mr-2 shrink-0 ${
                                 isSelected ? 'border-[#0F172A] bg-[#0F172A]' : 'border-slate-300'
                               }`}>
                                 {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
                               </div>
                             </div>
-                            <p className="text-xs font-bold text-slate-400 mt-0.5">
+                            <p className="text-xs font-bold text-slate-400 mt-1 leading-relaxed">
                               {offer.desc}
                             </p>
                           </div>
 
-                          {/* الشارة الإضافية إن وجدت */}
                           {offer.badge && (
                             <span className="absolute -top-2.5 left-4 bg-[#FFB800] text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-xs">
                               {offer.badge}
@@ -190,7 +196,7 @@ export default function Waitlist() {
 
                 <div className="mt-8 pt-4 border-t border-slate-200/60 hidden md:block">
                   <p className="text-[11px] font-bold text-slate-400">
-                    🔒 حجز المقعد مجاني 100% ولا يتطلب أداء أي رسوم حالياً.
+                    🔒 حجز المقعد مجاني 100% وبدون أي التزام مالي حالياً.
                   </p>
                 </div>
               </div>
@@ -198,19 +204,24 @@ export default function Waitlist() {
               {/* القسم 2: إدخال معلومات الطالب */}
               <div className="md:w-1/2 p-6 md:p-10 flex flex-col justify-center bg-white">
                 <div className="mb-6">
-                  <span className="text-[11px] font-black text-slate-500 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-3">
-                    المرحلة 2 من 2
+                  <span className="text-[11px] font-black text-slate-600 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-3">
+                    الخطوة الثانية
                   </span>
-                  <h2 className="text-xl md:text-2xl font-black text-slate-900 leading-tight">
+                  <h2 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">
                     معلومات التواصل معك 🚀
                   </h2>
                   <p className="text-xs font-bold text-slate-400 mt-1">
-                    عمر معلوماتك باش نصيفطو ليك إشعار فتح التسجيل فالواتساب.
+                    عمر معلوماتك باش نتواصلو معاك فور انطلاق الدفعة.
                   </p>
                 </div>
 
+                {errorMessage && (
+                  <div className="p-3 mb-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
+                    ⚠️ {errorMessage}
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* الاسم الكامل */}
                   <div>
                     <label className="block text-xs font-black text-slate-700 mb-1.5 mr-1">
                       الاسم الكامل
@@ -228,7 +239,6 @@ export default function Waitlist() {
                     </div>
                   </div>
 
-                  {/* رقم الواتساب */}
                   <div>
                     <label className="block text-xs font-black text-slate-700 mb-1.5 mr-1">
                       رقم الواتساب
@@ -247,7 +257,6 @@ export default function Waitlist() {
                     </div>
                   </div>
 
-                  {/* زر التأكيد السفلي العريض */}
                   <div className="pt-3">
                     <button
                       type="submit"
