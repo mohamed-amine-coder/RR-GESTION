@@ -6,18 +6,18 @@ import Footer from './components/Footer';
 import LoadingScreen from './components/common/LoadingScreen';
 import ScrollToTop from './components/common/ScrollToTop';
 
-const Home = lazy(() => import('./pages/Home'));
-const About = lazy(() => import('./pages/About'));
-const Modules = lazy(() => import('./pages/Modules'));
-const ModulePage = lazy(() => import('./pages/ModulePage'));
-const Login = lazy(() => import('./pages/Login'));
-const Waitlist = lazy(() => import('./pages/Waitlist'));
-const CourseViewer = lazy(() => import('./pages/CourseViewer'));
-const NotFound = lazy(() => import('./pages/NotFound'));
-const Presentation = lazy(() => import('./pages/Presentation'));
+const Home = lazy(() => import('./pages/public/Home'));
+const About = lazy(() => import('./pages/public/About'));
+const Modules = lazy(() => import('./pages/public/Modules'));
+const ModulePage = lazy(() => import('./pages/public/ModulePage'));
+const Login = lazy(() => import('./pages/auth/Login'));
+const Waitlist = lazy(() => import('./pages/public/Waitlist'));
+const CourseViewer = lazy(() => import('./pages/learning/CourseViewer'));
+const NotFound = lazy(() => import('./pages/public/NotFound'));
+const Presentation = lazy(() => import('./pages/public/Presentation'));
 const AdminRoute = lazy(() => import('./components/admin/AdminRoute'));
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
-const AdminWaitlist = lazy(() => import('./pages/AdminWaitlist'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminWaitlist = lazy(() => import('./pages/admin/AdminWaitlist'));
 
 export default function App() {
   return (

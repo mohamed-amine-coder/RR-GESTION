@@ -6,10 +6,10 @@ import {
   Rocket, Monitor, CheckCircle2, Presentation, MessageCircle, 
   Clock, Zap
 } from 'lucide-react';
-import mrRrImg from '../assets/mr-rr.png';
-import msRrImg from '../assets/ms-rr.png';
-import rrEnglishImg from '../assets/rr-english-screen.png';
-import rrStudentImg from '../assets/rr-student-screen.png';
+import mrRrImg from '../../assets/mr-rr.png';
+import msRrImg from '../../assets/ms-rr.png';
+import rrEnglishImg from '../../assets/rr-english-screen.png';
+import rrStudentImg from '../../assets/rr-student-screen.png';
 
 const TOC_ITEMS = [
   { id: 'methodology', label: 'المنهجية التعليمية', num: '01' },

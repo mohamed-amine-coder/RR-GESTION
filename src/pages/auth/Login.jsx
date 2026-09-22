@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Zap, ShieldCheck, BookOpen, Loader2, GraduationCap } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 export default function Login() {
   const [loading, setLoading] = useState(false);

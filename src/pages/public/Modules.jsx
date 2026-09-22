@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ArrowLeft, Lock, Flame, BellRing, Layers, Users } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { motion } from 'framer-motion';
-import rrTeamImg from '../assets/rr-team.png';
-import LoadingScreen from '../components/common/LoadingScreen';
+import rrTeamImg from '../../assets/rr-team.png';
+import LoadingScreen from '../../components/common/LoadingScreen';
 
 export default function Modules() {
   const [modules, setModules] = useState([]);
@@ -59,7 +59,7 @@ export default function Modules() {
             {/* Segmented Filter Bar - FIXED FOR MOBILE */}
             <div className="flex w-full md:w-auto md:inline-flex p-1 bg-slate-900/90 border border-slate-700/60 rounded-xl backdrop-blur-lg overflow-x-auto hide-scrollbar gap-1">
               {[
-                { id: 'ALL', label: ' ' },
+                { id: 'ALL', label: ' الكل' },
                 { id: 'EGTS', label: '  EGTS' },
                 { id: 'S1', label: '  1 (S1)' },
                 { id: 'S2', label: '  2 (S2)' }
@@ -154,7 +154,7 @@ export default function Modules() {
                     to={`/module/${mod.id}`}
                     className="w-full md:w-auto px-5 py-2.5 bg-slate-950 hover:bg-amber-400 hover:text-slate-950 text-white text-xs font-black rounded-xl transition-all duration-150 flex items-center justify-center gap-2 shadow-xs cursor-pointer"
                   >
-                    <span>اكتشف الموديل</span> {/* هنا زدنا الكلمة */}
+                    <span>اكتشف الموديل</span>
                     <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" />
                   </Link>
                 ) : (
@@ -163,7 +163,7 @@ export default function Modules() {
                     className="w-full md:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300/80 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <BellRing className="w-3.5 h-3.5 text-amber-600" />
-                    <span>قريبا (لائحة الانتظار)</span> {/* هنا زدنا الكلمة */}
+                    <span>افتح المقرر الكامل</span>
                   </Link>
                 )}
               </div>

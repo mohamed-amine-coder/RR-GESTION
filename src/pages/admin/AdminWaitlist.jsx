@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, MessageCircle, RefreshCw, Users, Search, ChevronDown } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 const STATUS_CONFIG = {
   new: { label: 'جديد 🟡', color: 'bg-amber-50 text-amber-800 border-amber-200' },

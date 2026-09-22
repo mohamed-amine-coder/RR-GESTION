@@ -18,8 +18,8 @@ import {
   ArrowRight,
   GraduationCap
 } from 'lucide-react';
-import mrRrImg from '../assets/mr-rr.png';
-import msRrImg from '../assets/ms-rr.png';
+import mrRrImg from '../../assets/mr-rr.png';
+import msRrImg from '../../assets/ms-rr.png';
 
 export default function InstaPostMaker() {
   const [jsonInput, setJsonInput] = useState('');

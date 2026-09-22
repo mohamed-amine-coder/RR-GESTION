@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sparkles, ArrowLeft, Briefcase, Calculator, TrendingUp, GraduationCap } from 'lucide-react';
-// import homeImg from '../assets/rr-gestion-home.png';
-import homeImg from '../assets/rr-team.png';
+// import homeImg from '../../assets/rr-gestion-home.png';
+import homeImg from '../../assets/rr-team.png';
 
 export default function Home() {
   return (

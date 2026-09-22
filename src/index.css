@@ -15,3 +15,8 @@ body {
     user-select: none;
   }
 }
+button,
+  [role="button"],
+  a {
+    cursor: pointer;
+  }
