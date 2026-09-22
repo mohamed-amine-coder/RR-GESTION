@@ -15,6 +15,7 @@ export default function Navbar() {
   const centerLinks = [
     { label: 'الرئيسية', path: '/', icon: Home },
     { label: 'الموديلات', path: '/modules', icon: BookOpen },
+    { label: 'كيفاش كنقراو؟', path: '/about', icon: Sparkles },
   ];
 
   const isAdmin = profile?.role === 'admin';

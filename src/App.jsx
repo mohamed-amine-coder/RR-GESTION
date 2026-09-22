@@ -7,6 +7,7 @@ import LoadingScreen from './components/common/LoadingScreen';
 import ScrollToTop from './components/common/ScrollToTop';
 
 const Home = lazy(() => import('./pages/Home'));
+const About = lazy(() => import('./pages/About'));
 const Modules = lazy(() => import('./pages/Modules'));
 const ModulePage = lazy(() => import('./pages/ModulePage'));
 const Login = lazy(() => import('./pages/Login'));
@@ -29,6 +30,7 @@ export default function App() {
             <Suspense fallback={<LoadingScreen message="جارٍ تجهيز التطبيق..." />}>
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
                 <Route path="/modules" element={<Modules />} />
                 <Route path="/module/:moduleId" element={<ModulePage />} />
                 <Route path="/viewer" element={<CourseViewer />} />
