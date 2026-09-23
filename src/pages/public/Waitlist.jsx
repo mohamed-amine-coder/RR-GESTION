@@ -228,10 +228,13 @@ export default function Waitlist() {
                       <input
                         type="text"
                         inputMode="numeric"
-                        pattern="[0-9]*"
+                        maxLength={10}
                         required
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '');
+                          setPhone(val);
+                        }}
                         placeholder="06 XX XX XX XX"
                         className="w-full pr-11 pl-4 py-3 bg-slate-900 border-2 border-slate-800 focus:border-[#FFB800] focus:bg-slate-950 rounded-2xl outline-none text-sm font-bold text-white transition-all text-left font-mono placeholder:text-slate-600"
                         dir="ltr"
