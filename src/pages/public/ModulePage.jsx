@@ -292,7 +292,7 @@ export default function ModulePage() {
                       <span>طلب التسجيل</span>
                     </span>
                   </button>
-                  <button
+                  {/* <button
                     type="button"
                     onClick={handleWhatsApp}
                     className="flex-1 rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-black text-slate-900 transition hover:bg-slate-200 cursor-pointer"
@@ -301,7 +301,7 @@ export default function ModulePage() {
                       <MessageCircle className="h-4 w-4" />
                       <span>تواصل عبر واتساب</span>
                     </span>
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </motion.div>

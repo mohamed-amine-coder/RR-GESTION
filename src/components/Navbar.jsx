@@ -56,7 +56,7 @@ export default function Navbar() {
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#0F172A] hover:bg-slate-800 text-white text-xs md:text-sm font-black rounded-xl transition shadow-xs active:scale-95 cursor-pointer"
         >
           <User className="w-4 h-4" />
-          <span>دخول ⚡</span>
+          <span>الحساب</span>
         </Link>
       );
     }
@@ -196,7 +196,7 @@ export default function Navbar() {
             </button>
           )}
 
-          <a
+          {/* <a
             href="https://wa.me/212600000000"
             target="_blank"
             rel="noreferrer"
@@ -205,7 +205,7 @@ export default function Navbar() {
           >
             <span>مساعدة أو استفسار عبر واتساب 💬</span>
             <MessageCircle className="h-4 w-4" />
-          </a>
+          </a> */}
         </div>
 
         <div className="border-t border-slate-200 px-4 py-3">
@@ -342,7 +342,7 @@ export default function Navbar() {
                     className="w-full py-3 bg-[#0F172A] text-white text-xs font-black rounded-xl flex items-center justify-center gap-2 shadow-xs"
                   >
                     <User className="w-4 h-4" />
-                    <span>دخول ⚡</span>
+                    <span>الحساب</span>
                   </Link>
                 </>
               ) : (
@@ -385,7 +385,7 @@ export default function Navbar() {
                     </Link>
                   )}
 
-                  <a
+                  {/* <a
                     href="https://wa.me/212600000000"
                     target="_blank"
                     rel="noreferrer"
@@ -394,7 +394,7 @@ export default function Navbar() {
                   >
                     <MessageCircle className="w-4 h-4" />
                     <span>واتساب 💬</span>
-                  </a>
+                  </a> */}
 
                   <button
                     type="button"

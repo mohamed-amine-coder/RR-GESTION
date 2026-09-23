@@ -25,9 +25,7 @@ export default function Footer() {
         <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-black text-slate-600">
           <Link to="/" className="hover:text-amber-600 transition">الرئيسية</Link>
           <Link to="/modules" className="hover:text-amber-600 transition">الموديلات</Link>
-          <Link to="/viewer" className="hover:text-amber-600 transition">درس تجريبي</Link>
           <Link to="/waitlist" className="hover:text-amber-600 transition">حجز مقعد</Link>
-          <Link to="/login" className="hover:text-amber-600 transition">تسجيل الدخول</Link>
         </div>
 
         {/* حقوق الملكية وضمان المحتوى */}

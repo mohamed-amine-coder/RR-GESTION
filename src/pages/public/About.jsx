@@ -3,7 +3,7 @@ import { motion, useScroll, useSpring } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   Sparkles, ArrowRight, BrainCircuit, Target, Languages, 
-  Rocket, Monitor, CheckCircle2, Presentation, MessageCircle, 
+  Rocket, Monitor, CheckCircle2, Presentation, MessageCircle,
   Clock, Zap
 } from 'lucide-react';
 import mrRrImg from '../../assets/mr-rr.png';
@@ -30,7 +30,7 @@ const FEATURES = [
   {
     icon: BrainCircuit,
     tag: 'طريقة العرض',
-    title: 'ميكرو-سلايدز بلا حشو',
+    title: 'ميكرو-سلايدز بلا تعقيد',
     desc: 'حيدنا الفيديوهات الطويلة والـ PDF الممل. الدروس مقسمة لشرائح تفاعلية مركزة وسريعة كتخليك تستوعب القاعدة فأقل من دقيقة.',
     badge: 'bg-white text-amber-800 border-slate-300',
     iconStyle: 'text-amber-700 bg-white'
@@ -266,15 +266,13 @@ export default function About() {
                   <span className="text-2xl font-black text-amber-400" dir="ltr">10 DH</span>
                 </div>
 
-                <a
-                  href="https://wa.me/212600000000?text=%D8%B3%D9%84%D8%A7%D9%85%D8%8C%20%D8%A8%D8%BA%D9%8A%D8%AA%20%D9%86%D8%B5%D8%A7%D9%88%D8%A8%20%D8%B9%D8%B1%D8%B6%20%D8%AA%D9%82%D8%AF%D9%8A%D9%85%D9%8A%20(Expos%C3%A9)%20%D9%85%D8%B9%20RR%20GESTION"
-                  target="_blank"
-                  rel="noreferrer"
+                <Link
+                  to="/waitlist"
                   className="w-full mt-2 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>طلب العرض التقديمي</span>
-                </a>
+                  <span>بغيتي تستافد ؟</span>
+                </Link>
               </div>
 
             </div>
