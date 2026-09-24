@@ -231,6 +231,41 @@ export default function SlideRenderer({
             </div>
           )}
 
+          {current.type === 'table' && (
+            <div className="bg-gradient-to-br from-slate-50 to-white border-2 border-slate-200 rounded-2xl p-4 md:p-6 shadow-sm overflow-hidden text-center">
+              {(current.title || current.tag) && (
+                <div className="mb-4">
+                  {current.tag && (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black mb-2 border border-slate-200">
+                      <span>{current.tag}</span>
+                    </div>
+                  )}
+                  {current.title && <h3 className="text-sm md:text-base font-black text-slate-900">{current.title}</h3>}
+                </div>
+              )}
+              <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                <table className="w-full text-right text-xs md:text-sm">
+                  <thead className="bg-slate-100 border-b border-slate-200 font-black text-slate-800">
+                    <tr>
+                      {current.headers?.map((h, i) => (
+                        <th key={i} className="p-3 border-l border-slate-200 last:border-l-0">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {current.rows?.map((row, i) => (
+                      <tr key={i} className="hover:bg-slate-50 transition">
+                        {row.map((cell, j) => (
+                          <td key={j} className="p-3 font-bold text-slate-600 border-l border-slate-100 last:border-l-0" dir="auto">{cell}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {current.type === 'audio' && (
             <div className="bg-gradient-to-br from-amber-50/60 to-indigo-50/40 border-2 border-indigo-400 rounded-2xl p-5 md:p-7 text-center shadow-sm">
               <div className="inline-flex items-center gap-1.5 text-indigo-600 font-black text-[10px] mb-3">

@@ -20,10 +20,76 @@ export default function useAdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [accessModule, setAccessModule] = useState('');
 
+  // Content editor specific states
+  const [editModuleId, setEditModuleId] = useState('');
+  const [editChapterId, setEditChapterId] = useState('');
+  const [editorChapters, setEditorChapters] = useState([]);
+  const [editorSlides, setEditorSlides] = useState([]);
+  const [selectedSlide, setSelectedSlide] = useState(null);
+  const [jsonTextarea, setJsonTextarea] = useState('');
+  const [isSavingJson, setIsSavingJson] = useState(false);
+
   useEffect(() => {
     fetchModules();
     fetchProfiles();
   }, []);
+
+  // Fetch chapters for editor when module changes
+  useEffect(() => {
+    if (!editModuleId) {
+      setEditorChapters([]);
+      setEditChapterId('');
+      return;
+    }
+    fetchEditorChapters(editModuleId);
+  }, [editModuleId]);
+
+  // Fetch slides for editor when chapter changes
+  useEffect(() => {
+    if (!editChapterId) {
+      setEditorSlides([]);
+      setSelectedSlide(null);
+      setJsonTextarea('');
+      return;
+    }
+    fetchEditorSlides(editChapterId);
+  }, [editChapterId]);
+
+  const fetchEditorChapters = async (moduleId) => {
+    const { data } = await supabase.from('chapters').select('*').eq('module_id', moduleId).order('order_index');
+    if (data) setEditorChapters(data);
+    else setEditorChapters([]);
+  };
+
+  const fetchEditorSlides = async (chapterId) => {
+    const { data } = await supabase.from('slides').select('*').eq('chapter_id', chapterId).order('order_index');
+    if (data) setEditorSlides(data);
+    else setEditorSlides([]);
+  };
+
+  const saveSlideJson = async () => {
+    if (!selectedSlide || !selectedSlide.id) return alert('المرجو اختيار السلايد أولاً!');
+
+    let parsedData;
+    try {
+      parsedData = JSON.parse(jsonTextarea);
+    } catch (err) {
+      return alert('بنية JSON غير صالحة: ' + err.message);
+    }
+
+    setIsSavingJson(true);
+    try {
+      const { error } = await supabase.from('slides').update({ content: parsedData }).eq('id', selectedSlide.id);
+      if (error) throw error;
+      alert('✅ تم حفظ السلايد بنجاح!');
+      // refresh slides
+      fetchEditorSlides(editChapterId);
+    } catch (err) {
+      alert('وقع خطأ: ' + err.message);
+    } finally {
+      setIsSavingJson(false);
+    }
+  };
 
   const fetchModules = async () => {
     const { data } = await supabase.from('modules').select('*').order('order_index');
@@ -257,5 +323,20 @@ export default function useAdminDashboard() {
     grantAccess,
     revokeAccess,
     filteredProfiles,
+    // editor exports
+    editModuleId,
+    setEditModuleId,
+    editChapterId,
+    setEditChapterId,
+    editorChapters,
+    editorSlides,
+    selectedSlide,
+    setSelectedSlide,
+    jsonTextarea,
+    setJsonTextarea,
+    isSavingJson,
+    saveSlideJson,
+    fetchEditorChapters,
+    fetchEditorSlides,
   };
 }

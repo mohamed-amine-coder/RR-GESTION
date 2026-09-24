@@ -3,6 +3,7 @@ import AdminTabs from '../../components/admin/AdminTabs';
 import SmartLessonManager from '../../components/admin/SmartLessonManager';
 import StructureManager from '../../components/admin/StructureManager';
 import AccessManager from '../../components/admin/AccessManager';
+import ContentEditorManager from '../../components/admin/ContentEditorManager';
 
 export default function AdminDashboard() {
   const {
@@ -30,6 +31,18 @@ export default function AdminDashboard() {
     filteredProfiles,
     grantAccess,
     revokeAccess,
+    editModuleId,
+    setEditModuleId,
+    editChapterId,
+    setEditChapterId,
+    editorChapters,
+    editorSlides,
+    selectedSlide,
+    setSelectedSlide,
+    jsonTextarea,
+    setJsonTextarea,
+    isSavingJson,
+    saveSlideJson,
   } = useAdminDashboard();
 
   return (
@@ -75,6 +88,24 @@ export default function AdminDashboard() {
               filteredProfiles={filteredProfiles}
               grantAccess={grantAccess}
               revokeAccess={revokeAccess}
+            />
+          )}
+
+          {activeTab === 'edit_content' && (
+            <ContentEditorManager
+              modules={modules}
+              editModuleId={editModuleId}
+              setEditModuleId={setEditModuleId}
+              editorChapters={editorChapters}
+              editChapterId={editChapterId}
+              setEditChapterId={setEditChapterId}
+              editorSlides={editorSlides}
+              selectedSlide={selectedSlide}
+              setSelectedSlide={setSelectedSlide}
+              jsonTextarea={jsonTextarea}
+              setJsonTextarea={setJsonTextarea}
+              saveSlideJson={saveSlideJson}
+              isSavingJson={isSavingJson}
             />
           )}
         </div>

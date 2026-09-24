@@ -51,7 +51,7 @@ export default function Home() {
             </div>
 
             {/* Features Highlights */}
-            <div className="grid grid-cols-3 gap-4 mt-12 pt-8 border-t border-slate-200/80 text-center lg:text-right">
+            {/* <div className="grid grid-cols-3 gap-4 mt-12 pt-8 border-t border-slate-200/80 text-center lg:text-right">
               <div>
                 <span className="block text-2xl font-black text-slate-900 flex items-center justify-center lg:justify-start gap-2">
                   14+ <Briefcase className="w-5 h-5 text-amber-500" />
@@ -65,10 +65,10 @@ export default function Home() {
                 <span className="text-xs font-bold text-slate-500">شرح بالدارجة</span>
               </div>
               <div>
-                <span className="block text-2xl font-black text-slate-900">49 DH</span>
-                <span className="text-xs font-bold text-slate-500">اشتراك رمزي للموديل</span>
+                <span className="block text-2xl font-black text-slate-900">الدروس</span>
+                <span className="text-xs font-bold text-slate-500">محتوى متجدد باستمرار</span>
               </div>
-            </div>
+            </div> */}
           </motion.div>
 
           {/* Image Side with Floating Elements */}

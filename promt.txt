@@ -14,7 +14,7 @@
 1. intro: ترحيب مطمئن يلامس مشكل الطالب مع هذا الدرس.
 2. dictionary: 3 مصطلحات للمحور الأول.
 3. concept: شرح الفكرة الأولى (مقسمة على شريحتين أو ثلاث).
-4. trap أو comparison: فخ شائع أو مقارنة لتوضيح الفرق.
+4. trap أو comparison او table: فخ شائع أو مقارنة لتوضيح الفرق.
 5. quiz: اختبار سريع جداً على المحور الأول.
 6. dictionary: 3 مصطلحات للمحور الثاني.
 7. concept: شرح المحور الثاني.
@@ -39,7 +39,8 @@
     { "type": "comparison", "left": { "title": "...", "bg": "bg-rose-50", "color": "text-rose-700", "dotColor": "bg-rose-500", "items": ["...", "..."] }, "right": { "title": "...", "bg": "bg-emerald-50", "color": "text-emerald-700", "dotColor": "bg-emerald-500", "items": ["...", "..."] } },
     { "type": "trap", "tag": "رد البال نهار الامتحان", "text": "..." },
     { "type": "quiz", "question": "...", "options": ["...", "...", "...", "..."], "correct": 0, "explanation": "..." },
-    { "type": "concept", "title": "Résumé: ...", "desc": "Texte 100% en Français pour l'examen...", "badges": ["À retenir"] }
+    { "type": "concept", "title": "Résumé: ...", "desc": "Texte 100% en Français pour l'examen...", "badges": ["À retenir"] },
+    { "type": "table", "tag": "جدول توضيحي", "title": "...", "headers": ["...", "..."], "rows": [ ["...", "..."], ["...", "..."] ] }
   ]
 }
 

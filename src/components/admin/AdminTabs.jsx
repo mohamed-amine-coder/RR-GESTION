@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Users, FolderPlus, Zap } from 'lucide-react';
+import { Users, FolderPlus, Zap, FileJson } from 'lucide-react';
 
 export default function AdminTabs({ activeTab, setActiveTab }) {
   return (
@@ -22,6 +22,12 @@ export default function AdminTabs({ activeTab, setActiveTab }) {
           className={`min-w-[150px] py-4 font-black flex items-center justify-center gap-2 ${activeTab === 'access' ? 'border-b-2 border-[#0F172A] text-slate-900' : 'text-slate-500'}`}
         >
           <Users className="w-5 h-5" /> إدارة الاشتراكات
+        </button>
+        <button
+          onClick={() => setActiveTab('edit_content')}
+          className={`min-w-[170px] py-4 font-black flex items-center justify-center gap-2 ${activeTab === 'edit_content' ? 'border-b-2 border-amber-500 text-slate-900 bg-amber-50/50' : 'text-slate-500'}`}
+        >
+          <FileJson className="w-5 h-5" /> تعديل المحتوى
         </button>
       </div>
 

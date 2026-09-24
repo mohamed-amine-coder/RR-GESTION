@@ -159,6 +159,7 @@ export default function useCourseViewer() {
     if (current?.type === 'concept') return 'ركز فهاد المفهوم 💡';
     if (current?.type === 'comparison') return 'شوف الفرق بيناتهم 👀';
     if (current?.type === 'audio') return 'سمع مزيان 🎧';
+    if (current?.type === 'table') return 'المعطيات فالجدول 📊';
     return null;
   })();
 
