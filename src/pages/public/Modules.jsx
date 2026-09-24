@@ -198,7 +198,7 @@ export default function Modules() {
         {filteredModules.length === 0 && (
           <div className="text-center py-14 bg-white rounded-2xl border border-slate-200 shadow-xs">
             <Layers className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="text-slate-500 font-bold text-xs">لا توجد مقررات في هذا الفصل حالياً.</p>
+            <p className="text-slate-500 font-bold text-xs">تأكد من اتصالك بالإنترنت</p>
           </div>
         )}
       </main>
