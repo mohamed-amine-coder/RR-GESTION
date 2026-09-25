@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ArrowLeft, Lock, Flame, BellRing, Layers, CheckCircle2 } from 'lucide-react';
+import { Sparkles, ArrowLeft, UserPlus, Flame, BellRing, Layers, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { motion } from 'framer-motion';
 import rrTeamImg from '../../assets/rr-team.png';
@@ -147,10 +147,11 @@ export default function Modules() {
                       <span>متاح الآن</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-black">
-                      <Lock className="w-3 h-3 text-rose-500" />
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-sky-50 border border-sky-200 text-sky-700 text-[11px] font-black">
+                      <UserPlus className="w-3 h-3 text-sky-500" />
                       <span>التسجيل مفتوح</span>
                     </span>
+
                   )}
                 </div>
 

@@ -303,7 +303,7 @@ export default function About() {
                         <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                       </div>
                       <span className="text-[10px] font-mono font-bold text-slate-600" dir="ltr">
-                        {proj.title.toLowerCase().replace(' ', '')}.web.app
+                        {proj.title.toLowerCase().replace(' ', '')}.vercel.app
                       </span>
                     </div>
 
