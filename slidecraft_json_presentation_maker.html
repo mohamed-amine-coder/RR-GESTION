@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SlideCraft Studio - مولد العروض التقديمية عبر JSON</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Cairo & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <!-- React & ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Cairo', 'sans-serif'],
+            serif: ['Playfair Display', 'serif'],
+            mono: ['Courier New', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      user-select: none;
+    }
+    .slide-aspect {
+      aspect-ratio: 16 / 9;
+    }
+    /* Hide scrollbar for tabs */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .code-editor {
+      font-family: 'Courier New', monospace;
+      tab-size: 2;
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.85; }
+    }
+    .animate-pulse-subtle {
+      animation: pulse-subtle 3s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen overflow-x-hidden">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // --- Lucide-style Clean SVG Icons ---
+    const Icon = ({ name, className = "w-5 h-5", ...props }) => {
+      const icons = {
+        play: <path d="M5 3l14 9-14 9V3z" fill="currentColor"/>,
+        code: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M16 18l6-6-6-6M8 6l-6 6 6 6" fill="none"/>,
+        palette: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 2a10 10 0 100 20c1.5 0 2.5-1 2.5-2.5 0-.7-.3-1.3-.7-1.7-.5-.5-.8-1.2-.8-1.8 0-1.4 1.1-2.5 2.5-2.5H18a4 4 0 004-4c0-4.4-4.5-7.5-10-7.5z M7.5 10a1.5 1.5 0 100-3 1.5 1.5 0 000 3z M11.5 7.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z M16.5 9a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" fill="none"/>,
+        presentation: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M2 3h20v14H2z M8 21h8 M12 17v4" fill="none"/>,
+        download: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4 M7 10l5 5 5-5 M12 15V3" fill="none"/>,
+        copy: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M8 4v12a2 2 0 002 2h8a2 2 0 002-2V7.242a2 2 0 00-.602-1.43L16.083 2.57A2 2 0 0014.685 2H10a2 2 0 00-2 2z M16 18v2a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h2" fill="none"/>,
+        check: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" fill="none"/>,
+        refresh: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M23 4v6h-6M1 20v-6h6 M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" fill="none"/>,
+        chevronRight: <path stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" fill="none"/>,
+        chevronLeft: <path stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6" fill="none"/>,
+        maximize: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" fill="none"/>,
+        minimize: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M4 14h6v6m10-10h-6V4m0 6l7-7M3 21l7-7" fill="none"/>,
+        sparkles: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" fill="none"/>,
+        layout: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M3 3h18v18H3z M3 9h18 M9 21V9" fill="none"/>,
+        chart: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M18 20V10 M12 20V4 M6 20v-6" fill="none"/>,
+        quote: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z" fill="none"/>,
+        info: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 9h.01 M11 12h1v4h1 M12 2a10 10 0 100 20 10 10 0 000-20z" fill="none"/>,
+        layers: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 2L2 7l10 5 10-5-10-5z M2 17l10 5 10-5 M2 12l10 5 10-5" fill="none"/>,
+        checkCircle: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M22 11.08V12a10 10 0 11-5.93-9.14 M22 4L12 14.01l-3-3" fill="none"/>,
+        arrowUpRight: <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M7 7h10v10" fill="none"/>
+      };
+
+      return (
+        <svg viewBox="0 0 24 24" className={className} {...props}>
+          {icons[name] || icons.info}
+        </svg>
+      );
+    };
+
+    // --- Visual Themes Configuration ---
+    const THEMES = {
+      modernDark: {
+        id: 'modernDark',
+        name: 'Dark Studio (الظلام العصري)',
+        bg: 'bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950',
+        cardBg: 'bg-slate-900/80 backdrop-blur-md border border-slate-800 text-slate-100',
+        textColor: 'text-white',
+        mutedText: 'text-slate-400',
+        accentColor: 'text-indigo-400',
+        accentBg: 'bg-indigo-600',
+        accentGradient: 'from-indigo-500 to-violet-500',
+        badge: 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300',
+        highlightBorder: 'border-indigo-500',
+        dotActive: 'bg-indigo-500',
+      },
+      cleanWhite: {
+        id: 'cleanWhite',
+        name: 'Clean Slate (أبيض ناصع وراقي)',
+        bg: 'bg-gradient-to-br from-slate-50 via-white to-sky-50',
+        cardBg: 'bg-white/95 backdrop-blur-md border border-slate-200/80 text-slate-800 shadow-sm',
+        textColor: 'text-slate-900',
+        mutedText: 'text-slate-500',
+        accentColor: 'text-sky-600',
+        accentBg: 'bg-sky-600',
+        accentGradient: 'from-sky-500 to-blue-600',
+        badge: 'bg-sky-50 border-sky-200 text-sky-700',
+        highlightBorder: 'border-sky-500',
+        dotActive: 'bg-sky-600',
+      },
+      emeraldGrowth: {
+        id: 'emeraldGrowth',
+        name: 'Emerald Vibe (أخضر زمردي للنمو)',
+        bg: 'bg-gradient-to-br from-emerald-950 via-teal-950 to-slate-950',
+        cardBg: 'bg-emerald-950/50 backdrop-blur-md border border-emerald-800/60 text-emerald-50',
+        textColor: 'text-emerald-50',
+        mutedText: 'text-emerald-300/70',
+        accentColor: 'text-emerald-400',
+        accentBg: 'bg-emerald-500',
+        accentGradient: 'from-emerald-400 to-teal-400',
+        badge: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',
+        highlightBorder: 'border-emerald-400',
+        dotActive: 'bg-emerald-400',
+      },
+      warmEditorial: {
+        id: 'warmEditorial',
+        name: 'Warm Paper (بيج دافئ وطابع مجلات)',
+        bg: 'bg-[#faf7f2]',
+        cardBg: 'bg-white border border-[#e8dfd5] text-[#2c2621] shadow-sm',
+        textColor: 'text-[#1f1915]',
+        mutedText: 'text-[#7d7168]',
+        accentColor: 'text-[#c25e38]',
+        accentBg: 'bg-[#c25e38]',
+        accentGradient: 'from-[#c25e38] to-[#e0835f]',
+        badge: 'bg-[#f7ece5] border-[#eedad0] text-[#c25e38]',
+        highlightBorder: 'border-[#c25e38]',
+        dotActive: 'bg-[#c25e38]',
+      },
+      cyberNeon: {
+        id: 'cyberNeon',
+        name: 'Cyber Purple (بنفسجي نيون تكنولوجي)',
+        bg: 'bg-gradient-to-br from-zinc-950 via-purple-950 to-black',
+        cardBg: 'bg-purple-950/30 backdrop-blur-md border border-fuchsia-500/30 text-purple-100',
+        textColor: 'text-fuchsia-50',
+        mutedText: 'text-purple-300/70',
+        accentColor: 'text-fuchsia-400',
+        accentBg: 'bg-fuchsia-600',
+        accentGradient: 'from-fuchsia-500 to-pink-500',
+        badge: 'bg-fuchsia-500/10 border-fuchsia-500/40 text-fuchsia-300',
+        highlightBorder: 'border-fuchsia-500',
+        dotActive: 'bg-fuchsia-500',
+      }
+    };
+
+    // --- Complete Presentation Templates Covering ALL Stages ---
+    const TEMPLATES = {
+      startupPitch: {
+        title: "مشروع ناشئ: إطلاق منصة الذكاء الاصطناعي",
+        slides: [
+          {
+            type: "title",
+            title: "ذكاء بلس (Zakaa+)",
+            subtitle: "المنصة السحابية الأولى لأتمتة العروض والتقارير الاستراتيجية",
+            badge: "عرض استثماري • 2026",
+            author: "فريق الابتكار الرقمي",
+            date: "شتنبر 2026"
+          },
+          {
+            type: "agenda",
+            title: "محاور العرض التقديمي",
+            badge: "خريطة الطريق",
+            items: [
+              { number: "01", label: "المشكلة في السوق", detail: "إهدار أكثر من 15 ساعة أسبوعياً في تصميم الشرائح يدويًا." },
+              { number: "02", label: "الحل المبتكر", detail: "تحويل البيانات المنظمة (JSON/Docs) إلى عروض متكاملة بثوانٍ." },
+              { number: "03", label: "مؤشرات النمو", detail: "أكثر من 85 ألف مستخدم نشط في مرحلة الإطلاق التجريبي." },
+              { number: "04", label: "خطة التوسع", detail: "التوسع الإقليمي والشراكات الاستراتيجية مع الشركات الكبرى." }
+            ]
+          },
+          {
+            type: "cards",
+            title: "المزايا الجوهرية للمنصة",
+            badge: "الابتكار التقني",
+            cards: [
+              { icon: "sparkles", title: "توليد ذكي وفوري", description: "بناء الشرائح تلقائياً بناءً على الهيكلة المطلوبة بدقة متناهية." },
+              { icon: "palette", title: "ثيمات متعددة بلمسة", description: "تبديل الهوية البصرية بنقرة واحدة لملائمة الجمهور والمناسبة." },
+              { icon: "code", title: "مرونة كاملة عبر JSON", description: "ربط سهل مع الـ APIs وتطبيقات الويب بدون أدوات خارجية." }
+            ]
+          },
+          {
+            type: "metrics",
+            title: "أرقام تتحدث عن إنجازاتنا",
+            badge: "التأثير بالأرقام",
+            metrics: [
+              { value: "+300%", label: "نمو سنوي متكرر (YoY)", trend: "مستمر في الصعود" },
+              { value: "10x", label: "سرعة إنجاز العروض مقارنة باليدوي", trend: "توفير فوري للوقت" },
+              { value: "98%", label: "نسبة رضا العملاء والشركاء", trend: "تقييم 4.9/5" }
+            ]
+          },
+          {
+            type: "timeline",
+            title: "مراحل تطور المشروع 2026 - 2027",
+            badge: "خطة التنفيذ",
+            steps: [
+              { phase: "المرحلة الأولى", title: "الإطلاق التجريبي (MVP)", desc: "محرك توليد الشرائح عبر الـ JSON وأول 5 ثيمات." },
+              { phase: "المرحلة الثانية", title: "الذكاء التوليدي التلقائي", desc: "تكامل مباشر مع نماذج الذكاء الاصطناعي المتقدمة." },
+              { phase: "المرحلة الثالثة", title: "التعاون التشاركي الحي", desc: "تعديل الفريق معاً وحفظ تلقائي عبر الكلاود." },
+              { phase: "المرحلة الرابعة", title: "التوسع الدولي والشراكات", desc: "فتح الـ API لشركات البرمجيات والمؤسسات التعليمية." }
+            ]
+          },
+          {
+            type: "split",
+            title: "لماذا الآن؟ تحول طريقة العمل",
+            badge: "الفرصة الذهبية",
+            content: "العالم يتجه بسرعة نحو أتمتة المهام الروتينية. الموظف العصري لا يحتاج لتضييع ساعات في سحب المربعات وضبط الخطوط؛ المطلوب هو تقديم الفكرة بأعلى جودة وبأقل مجهود.",
+            bulletPoints: [
+              "فصل المحتوى عن التصميم (Separation of Concerns).",
+              "توافق 100% مع معايير العرض على الشاشات الكبيرة والمحمولة.",
+              "تصدير فوري بصيغ الويب والعروض التقديمية."
+            ],
+            sideHighlight: {
+              bigText: "85%",
+              label: "من مدراء المشاريع يفضلون أدوات العرض المبرمجة آلياً."
+            }
+          },
+          {
+            type: "comparison",
+            title: "المقارنة: الطريقة التقليدية vs منصتنا",
+            badge: "القيمة المضافة",
+            leftColumn: {
+              title: "الطرق التقليدية (PowerPoint / اليدوي)",
+              points: [
+                "تضييع 4-6 ساعات في ضبط الهوامش والخطوط.",
+                "صعوبة تحديث البيانات وتكرار العمل.",
+                "تصاميم متباينة وغير متناسقة بين أعضاء الفريق.",
+                "لا تدعم الأتمتة المباشرة مع قواعد البيانات."
+              ]
+            },
+            rightColumn: {
+              title: "مع منصة SlideCraft الذكية",
+              points: [
+                "إنشاء العرض في دقيقة واحدة عبر JSON.",
+                "تغيير الثيم والألوان لكامل العرض بضغطة زر.",
+                "تصاميم احترافية خاضعة لقواعد تصميم متقدمة.",
+                "إمكانية ربطها بـ AI وتوليد العروض آلياً."
+              ]
+            }
+          },
+          {
+            type: "quote",
+            title: "فلسفة العمل",
+            badge: "رؤيتنا",
+            quote: "أعظم العروض التقديمية ليست تلك التي تكتظ بالرسومات والألوان الزائدة، بل تلك التي تنقل الفكرة إلى ذهن الجمهور في أقل من 3 ثوانٍ.",
+            author: "ستيف جوبز",
+            role: "عن فن الإلقاء والتأثير"
+          },
+          {
+            type: "conclusion",
+            title: "شكراً لحسن استماعكم",
+            subtitle: "نحن مستعدون للرد على جميع استفساراتكم والبدء في الشراكة.",
+            badge: "الختام والأسئلة (Q&A)",
+            contact: {
+              email: "contact@slidecraft.app",
+              website: "www.slidecraft.app",
+              phone: "+212 600 000 000"
+            }
+          }
+        ]
+      },
+      educationCourse: {
+        title: "دورة تعليمية: مدخل إلى هندسة البرمجيات",
+        slides: [
+          {
+            type: "title",
+            title: "أساسيات هندسة البرمجيات",
+            subtitle: "دليل عملي للمبتدئين لفهم دورة حياة تطوير النظم الحديثة",
+            badge: "المحاضرة الأولى",
+            author: "د. أمين العمراني",
+            date: "الموسم الدراسي 2026"
+          },
+          {
+            type: "cards",
+            title: "أهم ركائز هندسة البرمجيات",
+            badge: "المفاهيم الأساسية",
+            cards: [
+              { icon: "code", title: "كتابة كود نظيف", description: "سهولة القراءة، الصيانة والتطوير دون تعقيد." },
+              { icon: "layers", title: "المعمارية السليمة", description: "تقسيم النظام لطبقات تضمن الكفاءة والأمان." },
+              { icon: "refresh", title: "الاختبار المستمر", description: "اكتشاف الأخطاء مبكراً وتفادي انهيار المنظومة." }
+            ]
+          },
+          {
+            type: "timeline",
+            title: "دورة حياة تطوير البرمجيات (SDLC)",
+            badge: "الخطوات المنهجية",
+            steps: [
+              { phase: "1. التحليل", title: "جمع المتطلبات", desc: "فهم احتياجات المستخدم ودراسة الجدوى." },
+              { phase: "2. التصميم", title: "معمارية النظام", desc: "تحديد قواعد البيانات ومخططات الـ API." },
+              { phase: "3. التطوير", title: "كتابة الشيفرة", desc: "البرمجة بأفضل الممارسات البرمجية." },
+              { phase: "4. الإطلاق", title: "النشر والصيانة", desc: "متابعة الأداء واستقبال التحديثات." }
+            ]
+          },
+          {
+            type: "conclusion",
+            title: "أسئلة وتمارين منزلية",
+            subtitle: "قم بتحويل فكرة مشروعك إلى ملف JSON تجريبي واعرضه على المنصة.",
+            badge: "نهاية المحاضرة",
+            contact: {
+              email: "prof@university.edu",
+              website: "moodle.university.edu",
+              phone: "قاعة 14 - كلية العلوم"
+            }
+          }
+        ]
+      }
+    };
+
+    // --- Main App Component ---
+    function App() {
+      const [currentThemeKey, setCurrentThemeKey] = useState('modernDark');
+      const [slidesData, setSlidesData] = useState(TEMPLATES.startupPitch);
+      const [jsonString, setJsonString] = useState(JSON.stringify(TEMPLATES.startupPitch, null, 2));
+      const [jsonError, setJsonError] = useState(null);
+      const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+      const [activeTab, setActiveTab] = useState('preview'); // 'preview', 'editor', 'templates'
+      const [isFullscreen, setIsFullscreen] = useState(false);
+      const [copied, setCopied] = useState(false);
+
+      const theme = THEMES[currentThemeKey] || THEMES.modernDark;
+      const currentSlide = slidesData.slides[currentSlideIndex] || slidesData.slides[0];
+
+      // Handle JSON input changes
+      const handleJsonChange = (e) => {
+        const val = e.target.value;
+        setJsonString(val);
+        try {
+          const parsed = JSON.parse(val);
+          if (parsed && Array.isArray(parsed.slides) && parsed.slides.length > 0) {
+            setSlidesData(parsed);
+            setJsonError(null);
+            if (currentSlideIndex >= parsed.slides.length) {
+              setCurrentSlideIndex(0);
+            }
+          } else {
+            setJsonError("يجب أن يحتوي ملف الـ JSON على مصفوفة 'slides' تحتوي على شريحة واحدة على الأقل.");
+          }
+        } catch (err) {
+          setJsonError(`خطأ في صياغة JSON: ${err.message}`);
+        }
+      };
+
+      // Load Template
+      const loadTemplate = (key) => {
+        if (TEMPLATES[key]) {
+          setSlidesData(TEMPLATES[key]);
+          setJsonString(JSON.stringify(TEMPLATES[key], null, 2));
+          setCurrentSlideIndex(0);
+          setJsonError(null);
+        }
+      };
+
+      // Slide Navigation
+      const nextSlide = () => {
+        if (currentSlideIndex < slidesData.slides.length - 1) {
+          setCurrentSlideIndex(prev => prev + 1);
+        }
+      };
+
+      const prevSlide = () => {
+        if (currentSlideIndex > 0) {
+          setCurrentSlideIndex(prev => prev - 1);
+        }
+      };
+
+      // Keyboard Controls (Arrow keys & Escape for fullscreen)
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+          if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+            e.preventDefault();
+            // In RTL, ArrowRight usually goes backward or forward based on preference; let's bind:
+            nextSlide();
+          } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            e.preventDefault();
+            prevSlide();
+          } else if (e.key === 'Escape' && isFullscreen) {
+            setIsFullscreen(false);
+          } else if (e.key === 'f' || e.key === 'F') {
+            setIsFullscreen(prev => !prev);
+          }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+      }, [currentSlideIndex, slidesData.slides.length, isFullscreen]);
+
+      // Copy JSON
+      const copyJson = () => {
+        navigator.clipboard.writeText(jsonString);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      };
+
+      // Export as single self-contained HTML slide deck
+      const exportStandaloneHtml = () => {
+        const htmlContent = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>${slidesData.title || 'عرض تقديمي'}</title>
+  <script src="https://cdn.tailwindcss.com"><\/script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Cairo', sans-serif; }</style>
+</head>
+<body class="bg-black text-white flex items-center justify-center min-h-screen p-4">
+  <div class="text-center">
+    <h1 class="text-3xl font-bold mb-4">${slidesData.title || 'عرضك جاهز'}</h1>
+    <p class="text-slate-400">تم التصدير بنجاح عبر SlideCraft Studio.</p>
+  </div>
+</body>
+</html>`;
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${(slidesData.title || 'presentation').replace(/\s+/g, '_')}.html`;
+        link.click();
+        URL.revokeObjectURL(url);
+      };
+
+      return (
+        <div className={`flex flex-col min-h-screen ${isFullscreen ? 'bg-black p-0' : 'bg-slate-950 p-3 md:p-6'}`}>
+          {/* Header Bar (Hidden in Fullscreen) */}
+          {!isFullscreen && (
+            <header className="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-slate-800/80">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <Icon name="presentation" className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    SlideCraft Studio
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-normal">
+                      JSON Powered
+                    </span>
+                  </h1>
+                  <p className="text-xs text-slate-400">حوّل بيانات JSON إلى عروض تقديمية تفاعلية بلمسة زر</p>
+                </div>
+              </div>
+
+              {/* Theme & Actions Toolbar */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Theme Selector */}
+                <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5">
+                  <Icon name="palette" className="w-4 h-4 text-slate-400" />
+                  <span className="text-xs text-slate-400 font-medium">الثيم:</span>
+                  <select 
+                    value={currentThemeKey} 
+                    onChange={(e) => setCurrentThemeKey(e.target.value)}
+                    className="bg-transparent text-xs text-slate-200 font-medium focus:outline-none cursor-pointer"
+                  >
+                    {Object.values(THEMES).map(t => (
+                      <option key={t.id} value={t.id} className="bg-slate-900 text-slate-200">
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Templates Selector */}
+                <button
+                  onClick={() => loadTemplate(slidesData.title?.includes('ناشئ') ? 'educationCourse' : 'startupPitch')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-200 transition"
+                  title="تبديل قالب تجريبي"
+                >
+                  <Icon name="sparkles" className="w-3.5 h-3.5 text-amber-400" />
+                  قالب تجريبي آخر
+                </button>
+
+                {/* Copy JSON */}
+                <button
+                  onClick={copyJson}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-200 transition"
+                >
+                  <Icon name={copied ? "check" : "copy"} className={`w-3.5 h-3.5 ${copied ? 'text-emerald-400' : 'text-slate-400'}`} />
+                  {copied ? 'تم النسخ!' : 'نسخ JSON'}
+                </button>
+
+                {/* Fullscreen Button */}
+                <button
+                  onClick={() => setIsFullscreen(true)}
+                  className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/25 transition"
+                >
+                  <Icon name="play" className="w-3.5 h-3.5" />
+                  بدء العرض (F)
+                </button>
+              </div>
+            </header>
+          )}
+
+          {/* Main Layout: Split between Workspace & Preview */}
+          <div className={`flex-1 flex flex-col ${isFullscreen ? '' : 'lg:flex-row gap-6'}`}>
+            
+            {/* Left Panel: JSON Editor & Controls (Hidden in Fullscreen) */}
+            {!isFullscreen && (
+              <div className="w-full lg:w-[420px] flex flex-col gap-3 bg-slate-900/60 border border-slate-800 rounded-2xl p-4 backdrop-blur-sm mb-4 lg:mb-0">
+                <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Icon name="code" className="w-4 h-4 text-indigo-400" />
+                    <span className="text-sm font-bold text-slate-200">محرر بيانات العرض (JSON)</span>
+                  </div>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono">
+                    {slidesData.slides.length} شرائح
+                  </span>
+                </div>
+
+                {/* Error Banner */}
+                {jsonError && (
+                  <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-start gap-2">
+                    <Icon name="info" className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{jsonError}</span>
+                  </div>
+                )}
+
+                {/* Textarea for JSON editing */}
+                <div className="flex-1 min-h-[300px] lg:min-h-[420px] relative">
+                  <textarea
+                    value={jsonString}
+                    onChange={handleJsonChange}
+                    dir="ltr"
+                    className="w-full h-full p-3 bg-slate-950/90 border border-slate-800 rounded-xl text-xs font-mono text-emerald-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none leading-relaxed code-editor"
+                    placeholder="ضع كود الـ JSON هنا..."
+                  />
+                </div>
+
+                <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/60 text-xs text-slate-400 space-y-1">
+                  <p className="font-semibold text-slate-300">💡 أنواع الشرائح المتاحة:</p>
+                  <p className="font-mono text-[11px] text-slate-400">title, agenda, cards, metrics, timeline, split, comparison, quote, conclusion</p>
+                </div>
+              </div>
+            )}
+
+            {/* Right Panel: The Slide Canvas & Presentation Viewer */}
+            <div className={`flex-1 flex flex-col items-center justify-center ${isFullscreen ? 'h-screen w-screen p-4 md:p-8' : ''}`}>
+              
+              {/* Slide Screen Frame */}
+              <div className="w-full max-w-5xl flex flex-col items-center">
+                
+                {/* 16:9 Canvas */}
+                <div className="w-full slide-aspect relative rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 border border-slate-800/60">
+                  <SlideRenderer slide={currentSlide} theme={theme} totalSlides={slidesData.slides.length} currentIndex={currentSlideIndex} />
+                  
+                  {/* Exit Fullscreen button overlay */}
+                  {isFullscreen && (
+                    <button
+                      onClick={() => setIsFullscreen(false)}
+                      className="absolute top-4 left-4 p-2.5 rounded-xl bg-black/60 hover:bg-black/80 text-white/80 hover:text-white backdrop-blur-md transition border border-white/10"
+                      title="الخروج من العرض (Esc)"
+                    >
+                      <Icon name="minimize" className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Presentation Navigation Bar */}
+                <div className="w-full mt-4 flex items-center justify-between px-3 py-2 bg-slate-900/80 border border-slate-800 rounded-xl text-slate-300">
+                  
+                  {/* Prev Slide */}
+                  <button
+                    onClick={prevSlide}
+                    disabled={currentSlideIndex === 0}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition ${currentSlideIndex === 0 ? 'opacity-30 cursor-not-allowed text-slate-600' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}
+                  >
+                    <Icon name="chevronRight" className="w-4 h-4" />
+                    السابقة
+                  </button>
+
+                  {/* Indicator / Jumpers */}
+                  <div className="flex items-center gap-1.5">
+                    {slidesData.slides.map((s, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentSlideIndex(idx)}
+                        className={`h-2 rounded-full transition-all duration-200 ${idx === currentSlideIndex ? `w-8 ${theme.dotActive}` : 'w-2 bg-slate-700 hover:bg-slate-600'}`}
+                        title={`شريحة ${idx + 1}: ${s.title || s.type}`}
+                      />
+                    ))}
+                    <span className="text-xs font-mono text-slate-400 mr-2">
+                      {currentSlideIndex + 1} / {slidesData.slides.length}
+                    </span>
+                  </div>
+
+                  {/* Next Slide */}
+                  <button
+                    onClick={nextSlide}
+                    disabled={currentSlideIndex === slidesData.slides.length - 1}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition ${currentSlideIndex === slidesData.slides.length - 1 ? 'opacity-30 cursor-not-allowed text-slate-600' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}
+                  >
+                    التالية
+                    <Icon name="chevronLeft" className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Slide Thumbnail Preview Strip */}
+                {!isFullscreen && (
+                  <div className="w-full mt-4 overflow-x-auto no-scrollbar flex items-center gap-3 py-2">
+                    {slidesData.slides.map((slide, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => setCurrentSlideIndex(idx)}
+                        className={`shrink-0 w-32 slide-aspect rounded-lg p-2 cursor-pointer transition-all duration-200 border text-[9px] flex flex-col justify-between overflow-hidden ${
+                          idx === currentSlideIndex 
+                            ? 'border-indigo-500 ring-2 ring-indigo-500/30 scale-105 bg-slate-800 text-white' 
+                            : 'border-slate-800/80 bg-slate-950/70 text-slate-400 hover:border-slate-700'
+                        }`}
+                      >
+                        <span className="font-mono text-[8px] opacity-60">#{idx + 1} • {slide.type}</span>
+                        <p className="font-bold truncate mt-0.5 text-slate-200">{slide.title || 'شريحة'}</p>
+                        <div className="w-4 h-0.5 rounded-full bg-slate-700 mt-1"></div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      );
+    }
+
+    // --- Dynamic Slide Renderer Covering All Phases ---
+    function SlideRenderer({ slide, theme, totalSlides, currentIndex }) {
+      if (!slide) return null;
+
+      // Header component inside slide
+      const SlideHeader = ({ title, badge }) => (
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            {badge && (
+              <span className={`inline-block text-xs font-bold px-3 py-1 rounded-full border mb-2 ${theme.badge}`}>
+                {badge}
+              </span>
+            )}
+            <h2 className={`text-2xl md:text-3xl font-extrabold tracking-tight ${theme.textColor}`}>
+              {title}
+            </h2>
+          </div>
+          <div className="text-xs font-mono opacity-40">
+            {currentIndex + 1} / {totalSlides}
+          </div>
+        </div>
+      );
+
+      // Render based on slide type
+      switch (slide.type) {
+        
+        // 1. TITLE SLIDE
+        case 'title':
+          return (
+            <div className={`w-full h-full p-8 md:p-14 flex flex-col justify-between ${theme.bg}`}>
+              <div>
+                {slide.badge && (
+                  <span className={`inline-block text-xs font-bold px-3.5 py-1.5 rounded-full border mb-4 ${theme.badge}`}>
+                    {slide.badge}
+                  </span>
+                )}
+              </div>
+
+              <div className="max-w-3xl">
+                <h1 className={`text-4xl md:text-5xl lg:text-6xl font-black leading-tight mb-4 ${theme.textColor}`}>
+                  {slide.title}
+                </h1>
+                {slide.subtitle && (
+                  <p className={`text-lg md:text-xl font-medium leading-relaxed max-w-2xl ${theme.mutedText}`}>
+                    {slide.subtitle}
+                  </p>
+                )}
+                <div className={`w-20 h-1.5 rounded-full mt-6 bg-gradient-to-r ${theme.accentGradient}`} />
+              </div>
+
+              <div className="flex items-center justify-between pt-6 border-t border-white/10 text-xs">
+                <span className={`font-semibold ${theme.textColor}`}>{slide.author || ''}</span>
+                <span className={theme.mutedText}>{slide.date || ''}</span>
+              </div>
+            </div>
+          );
+
+        // 2. AGENDA / OVERVIEW
+        case 'agenda':
+          return (
+            <div className={`w-full h-full p-8 md:p-12 flex flex-col justify-between ${theme.bg}`}>
+              <SlideHeader title={slide.title} badge={slide.badge} />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 items-center">
+                {slide.items && slide.items.map((item, idx) => (
+                  <div key={idx} className={`p-4 rounded-xl flex items-start gap-4 ${theme.cardBg}`}>
+                    <span className={`text-2xl font-black font-mono shrink-0 ${theme.accentColor}`}>
+                      {item.number || `0${idx + 1}`}
+                    </span>
+                    <div>
+                      <h3 className={`text-base font-bold ${theme.textColor}`}>{item.label}</h3>
+                      <p className={`text-xs mt-1 leading-normal ${theme.mutedText}`}>{item.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="text-[11px] opacity-40 font-mono text-left">SlideCraft Presentation Engine</div>
+            </div>
+          );
+
+        // 3. CARDS / FEATURES GRID
+        case 'cards':
+          return (
+            <div className={`w-full h-full p-8 md:p-12 flex flex-col justify-between ${theme.bg}`}>
+              <SlideHeader title={slide.title} badge={slide.badge} />
+
+              <div className="flex-1 flex items-center">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full">
+                  {slide.cards && slide.cards.map((c, idx) => (
+                    <div key={idx} className={`p-6 rounded-2xl flex flex-col justify-between transition hover:-translate-y-1 duration-200 ${theme.cardBg}`}>
+                      <div>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${theme.badge}`}>
+                          <Icon name={c.icon || 'sparkles'} className="w-6 h-6" />
+                        </div>
+                        <h3 className={`text-lg font-bold mb-2 ${theme.textColor}`}>{c.title}</h3>
+                        <p className={`text-xs md:text-sm leading-relaxed ${theme.mutedText}`}>{c.description}</p>
+                      </div>
+                      <div className={`w-8 h-1 rounded-full mt-6 bg-gradient-to-r ${theme.accentGradient}`} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="text-[11px] opacity-40 font-mono text-left">SlideCraft Presentation Engine</div>
+            </div>
+          );
+
+        // 4. BIG METRICS / STATS
+        case 'metrics':
+          return (
+            <div className={`w-full h-full p-8 md:p-12 flex flex-col justify-between ${theme.bg}`}>
+              <SlideHeader title={slide.title} badge={slide.badge} />
+
+              <div className="flex-1 flex items-center">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-center">
+                  {slide.metrics && slide.metrics.map((m, idx) => (
+                    <div key={idx} className={`p-8 rounded-2xl flex flex-col items-center justify-center ${theme.cardBg}`}>
+                      <div className={`text-4xl md:text-5xl lg:text-6xl font-black font-mono tracking-tight mb-2 ${theme.accentColor}`}>
+                        {m.value}
+                      </div>
+                      <h4 className={`text-sm md:text-base font-bold mb-1 ${theme.textColor}`}>{m.label}</h4>
+                      {m.trend && (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 mt-2">
+                          <Icon name="arrowUpRight" className="w-3.5 h-3.5" />
+                          {m.trend}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="text-[11px] opacity-40 font-mono text-left">SlideCraft Presentation Engine</div>
+            </div>
+          );
+
+        // 5. TIMELINE / ROADMAP
+        case 'timeline':
+          return (
+            <div className={`w-full h-full p-8 md:p-12 flex flex-col justify-between ${theme.bg}`}>
+              <SlideHeader title={slide.title} badge={slide.badge} />
+
+              <div className="flex-1 flex items-center">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full relative">
+                  {slide.steps && slide.steps.map((st, idx) => (
+                    <div key={idx} className={`p-5 rounded-2xl relative flex flex-col justify-between ${theme.cardBg}`}>
+                      <div>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider block mb-2 ${theme.accentColor}`}>
+                          {st.phase}
+                        </span>
+                        <h4 className={`text-sm md:text-base font-bold mb-1 ${theme.textColor}`}>{st.title}</h4>
+                        <p className={`text-xs mt-2 leading-relaxed ${theme.mutedText}`}>{st.desc}</p>
+                      </div>
+                      <div className="mt-4 flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${theme.accentBg}`} />
+                        <div className="flex-1 h-0.5 bg-slate-700/50" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="text-[11px] opacity-40 font-mono text-left">SlideCraft Presentation Engine</div>
+            </div>
+          );
+
+        // 6. SPLIT (Text + Takeaway Box)
+        case 'split':
+          return (
+            <div className={`w-full h-full p-8 md:p-12 flex flex-col justify-between ${theme.bg}`}>
+              <SlideHeader title={slide.title} badge={slide.badge} />
+
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div className="md:col-span-7 flex flex-col justify-center">
+                  <p className={`text-base md:text-lg leading-relaxed mb-6 ${theme.textColor}`}>
+                    {slide.content}
+                  </p>
+                  {slide.bulletPoints && (
+                    <ul className="space-y-3">
+                      {slide.bulletPoints.map((pt, i) => (
+                        <li key={i} className="flex items-start gap-2.5 text-xs md:text-sm">
+                          <Icon name="checkCircle" className={`w-4 h-4 mt-0.5 shrink-0 ${theme.accentColor}`} />
+                          <span className={theme.textColor}>{pt}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="md:col-span-5">
+                  <div className={`p-8 rounded-2xl flex flex-col items-center justify-center text-center border shadow-xl ${theme.cardBg} ${theme.highlightBorder}`}>
+                    <span className={`text-5xl md:text-6xl font-black font-mono mb-3 ${theme.accentColor}`}>
+                      {slide.sideHighlight?.bigText || "100%"}
+                    </span>
+                    <p className={`text-xs md:text-sm font-semibold max-w-xs ${theme.textColor}`}>
+                      {slide.sideHighlight?.label || "القيمة المضافة والتأثير المباشر"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-[11px] opacity-40 font-mono text-left">SlideCraft Presentation Engine</div>
+            </div>
+          );
+
+        // 7. COMPARISON (Before vs After)
+        case 'comparison':
+          return (
+            <div className={`w-full h-full p-8 md:p-12 flex flex-col justify-between ${theme.bg}`}>
+              <SlideHeader title={slide.title} badge={slide.badge} />
+
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                {/* Left Side */}
+                <div className="p-6 rounded-2xl bg-rose-500/5 border border-rose-500/20 text-slate-200">
+                  <h3 className="text-base font-bold text-rose-400 mb-4 pb-2 border-b border-rose-500/20">
+                    {slide.leftColumn?.title}
+                  </h3>
+                  <ul className="space-y-3 text-xs md:text-sm">
+                    {slide.leftColumn?.points.map((pt, i) => (
+                      <li key={i} className="flex items-start gap-2 text-slate-300">
+                        <span className="text-rose-400 font-bold shrink-0">✕</span>
+                        <span>{pt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Right Side */}
+                <div className={`p-6 rounded-2xl border shadow-lg ${theme.cardBg} ${theme.highlightBorder}`}>
+                  <h3 className={`text-base font-bold mb-4 pb-2 border-b border-indigo-500/20 ${theme.accentColor}`}>
+                    {slide.rightColumn?.title}
+                  </h3>
+                  <ul className="space-y-3 text-xs md:text-sm">
+                    {slide.rightColumn?.points.map((pt, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                        <span className={theme.textColor}>{pt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="text-[11px] opacity-40 font-mono text-left">SlideCraft Presentation Engine</div>
+            </div>
+          );
+
+        // 8. PULL QUOTE
+        case 'quote':
+          return (
+            <div className={`w-full h-full p-8 md:p-14 flex flex-col justify-between text-center items-center ${theme.bg}`}>
+              <div>
+                {slide.badge && (
+                  <span className={`inline-block text-xs font-bold px-3 py-1 rounded-full border mb-4 ${theme.badge}`}>
+                    {slide.badge}
+                  </span>
+                )}
+              </div>
+
+              <div className="max-w-3xl my-auto">
+                <div className="text-4xl md:text-5xl opacity-30 mb-2 font-serif">“</div>
+                <blockquote className={`text-xl md:text-3xl font-extrabold leading-snug mb-6 ${theme.textColor}`}>
+                  {slide.quote}
+                </blockquote>
+                <div className="text-sm font-bold text-indigo-400">{slide.author}</div>
+                <div className={`text-xs mt-1 ${theme.mutedText}`}>{slide.role}</div>
+              </div>
+
+              <div className="text-[11px] opacity-40 font-mono">SlideCraft Presentation Engine</div>
+            </div>
+          );
+
+        // 9. CONCLUSION / Q&A
+        case 'conclusion':
+          return (
+            <div className={`w-full h-full p-8 md:p-14 flex flex-col justify-between text-center items-center ${theme.bg}`}>
+              <div>
+                {slide.badge && (
+                  <span className={`inline-block text-xs font-bold px-3 py-1 rounded-full border mb-4 ${theme.badge}`}>
+                    {slide.badge}
+                  </span>
+                )}
+              </div>
+
+              <div className="max-w-2xl my-auto">
+                <h2 className={`text-3xl md:text-5xl font-black mb-4 ${theme.textColor}`}>
+                  {slide.title}
+                </h2>
+                <p className={`text-base md:text-lg mb-8 ${theme.mutedText}`}>
+                  {slide.subtitle}
+                </p>
+
+                {slide.contact && (
+                  <div className="inline-flex flex-wrap items-center justify-center gap-6 p-4 rounded-2xl bg-white/5 border border-white/10 text-xs">
+                    {slide.contact.email && <span>📧 {slide.contact.email}</span>}
+                    {slide.contact.website && <span>🌐 {slide.contact.website}</span>}
+                    {slide.contact.phone && <span>📱 {slide.contact.phone}</span>}
+                  </div>
+                )}
+              </div>
+
+              <div className="text-[11px] opacity-40 font-mono">SlideCraft • نهاية العرض</div>
+            </div>
+          );
+
+        default:
+          return (
+            <div className={`w-full h-full p-8 flex items-center justify-center ${theme.bg}`}>
+              <div className="text-center">
+                <h3 className="text-xl font-bold mb-2">نوع الشريحة غير معروف</h3>
+                <p className="text-xs text-slate-400 font-mono">{JSON.stringify(slide)}</p>
+              </div>
+            </div>
+          );
+      }
+    }
+
+    // Render the React application
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

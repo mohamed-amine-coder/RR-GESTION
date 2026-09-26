@@ -1,0 +1,54 @@
+{
+  "title_ar": "",
+  "badge": "",
+  "slides": [
+    {
+      "type": "intro",
+      "tag": "",
+      "contentAr": ""
+    },
+    {
+      "type": "concept",
+      "title": "",
+      "desc": "",
+      "badges": []
+    },
+    {
+      "type": "dictionary",
+      "tag": "",
+      "terms": [
+        { "ar": "", "fr": "" }
+      ]
+    },
+    {
+      "type": "comparison",
+      "left": {
+        "title": "",
+        "items": []
+      },
+      "right": {
+        "title": "",
+        "items": []
+      }
+    },
+    {
+      "type": "quiz",
+      "question": "",
+      "options": ["", "", ""],
+      "correct": 0,
+      "explanation": ""
+    },
+    {
+      "type": "exercise",
+      "tag": "",
+      "question": "",
+      "answer": "",
+      "steps": []
+    },
+    {
+      "type": "trap",
+      "tag": "",
+      "text": ""
+    }
+  ]
+}

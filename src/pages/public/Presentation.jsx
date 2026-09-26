@@ -1,14 +1,14 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
 import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { 
-  Zap, 
-  AlertTriangle, 
-  KeyRound, 
-  Lightbulb, 
-  ArrowLeftRight, 
-  Download, 
+import {
+  Zap,
+  AlertTriangle,
+  KeyRound,
+  Lightbulb,
+  ArrowLeftRight,
+  Download,
   Image as ImageIcon,
   Sparkles,
   HelpCircle,
@@ -21,6 +21,18 @@ import {
 import mrRrImg from '../../assets/mr-rr.png';
 import msRrImg from '../../assets/ms-rr.png';
 
+// ============ Design tokens (light / educational theme) ============
+// Warm cream base instead of a dark navy — reads as a study card, not a
+// nightclub. One accent (amber) carries the brand; ink is a warm near-black
+// rather than pure #000 so it stays soft on a cream ground.
+const INK = '#211B12';
+const BODY = '#4B4436';
+const CREAM = '#FBF6EA';
+const CARD = '#FFFFFF';
+const HAIRLINE = '#E7DFCB';
+const AMBER = '#C97A19';
+const AMBER_SOFT = '#F5A623';
+
 export default function InstaPostMaker() {
   const [jsonInput, setJsonInput] = useState('');
   const [parsedData, setParsedData] = useState(null);
@@ -28,8 +40,34 @@ export default function InstaPostMaker() {
   const [isExportingSingle, setIsExportingSingle] = useState(false);
   const [isExportingAll, setIsExportingAll] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
-  
+  const [scale, setScale] = useState(0.5);
+
   const printRef = useRef(null);
+  const frameWrapperRef = useRef(null);
+
+  // ---- Dynamic scale: the 1080x1080 canvas always fills the available
+  // preview area instead of sitting tiny inside a fixed 0.52x box. ----
+  useLayoutEffect(() => {
+    const el = frameWrapperRef.current;
+    if (!el) return;
+
+    const computeScale = () => {
+      const PADDING = 32; // breathing room inside the preview frame
+      const availableW = el.clientWidth - PADDING;
+      const availableH = el.clientHeight - PADDING;
+      const next = Math.max(Math.min(availableW / 1080, availableH / 1080), 0.1);
+      setScale(next);
+    };
+
+    computeScale();
+    const ro = new ResizeObserver(computeScale);
+    ro.observe(el);
+    window.addEventListener('resize', computeScale);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', computeScale);
+    };
+  }, []);
 
   const handleParseJSON = () => {
     try {
@@ -66,14 +104,14 @@ export default function InstaPostMaker() {
   const exportSingleImage = async () => {
     if (!printRef.current) return;
     setIsExportingSingle(true);
-    
+
     try {
-      const dataUrl = await toPng(printRef.current, { 
+      const dataUrl = await toPng(printRef.current, {
         quality: 1,
         pixelRatio: 2,
-        cacheBust: true 
+        cacheBust: true
       });
-      
+
       const link = document.createElement('a');
       const num = String(selectedSlideIndex + 1).padStart(2, '0');
       link.download = `RR_${parsedData?.badge || 'post'}_slide_${num}.png`;
@@ -124,44 +162,51 @@ export default function InstaPostMaker() {
     }
   };
 
+  // ============ Slide content ============
+  // One anchor surface per slide instead of 3-4 stacked cards: a slide is a
+  // page in a study notebook, so hierarchy comes from type size/weight and
+  // spacing, and the white card only appears where content genuinely needs
+  // to be set apart (a term list, two columns to compare, quiz options).
   const renderSlideContent = (slide) => {
     switch (slide.type) {
       case 'intro':
         return (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-7 max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-5 py-2 bg-amber-400/10 text-amber-400 rounded-full text-lg font-black border border-amber-400/30">
+          <div className="flex flex-col items-center justify-center h-full text-center gap-8 max-w-3xl mx-auto">
+            <div
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-lg font-black"
+              style={{ background: 'rgba(201,122,25,0.10)', color: AMBER }}
+            >
               <Sparkles className="w-5 h-5" />
               <span>{slide.tag || 'مقدمة الدرس'}</span>
             </div>
-            <h2 className="text-4xl font-black text-white leading-snug">
+            <h2 className="text-5xl font-black leading-snug" style={{ color: INK }}>
               {parsedData?.title_ar}
             </h2>
-            <div className="relative bg-slate-900/80 backdrop-blur-md p-9 rounded-[2.5rem] border border-slate-800 shadow-2xl">
-              <p className="text-2xl font-bold text-slate-300 leading-relaxed">
-                {slide.contentAr}
-              </p>
-            </div>
+            <p className="text-2xl font-bold leading-relaxed max-w-2xl" style={{ color: BODY }}>
+              {slide.contentAr}
+            </p>
           </div>
         );
 
       case 'concept':
         return (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-6 max-w-3xl mx-auto">
-            <div className="p-4 bg-amber-400/10 rounded-2xl border border-amber-400/30">
-              <Lightbulb className="w-12 h-12 text-amber-400" />
-            </div>
-            <h2 className="text-4xl font-black text-white leading-snug">
+          <div className="flex flex-col items-center justify-center h-full text-center gap-7 max-w-3xl mx-auto">
+            <Lightbulb className="w-11 h-11" style={{ color: AMBER }} />
+            <h2 className="text-4xl font-black leading-snug" style={{ color: INK }}>
               {slide.title}
             </h2>
-            <div className="bg-slate-900/80 backdrop-blur-md p-8 rounded-[2rem] border border-slate-800 shadow-xl">
-              <p className="text-2xl font-bold text-slate-300 leading-relaxed">
-                {slide.desc}
-              </p>
-            </div>
+            <p className="text-2xl font-bold leading-relaxed" style={{ color: BODY }}>
+              {slide.desc}
+            </p>
             {slide.badges && (
               <div className="flex flex-wrap gap-3 justify-center pt-2">
                 {slide.badges.map((b, i) => (
-                  <span key={i} className="text-lg font-black bg-gradient-to-r from-amber-400 to-[#FFB800] text-slate-950 px-5 py-2 rounded-xl shadow-md" dir="ltr">
+                  <span
+                    key={i}
+                    className="text-lg font-black px-5 py-2 rounded-xl"
+                    style={{ background: AMBER_SOFT, color: INK }}
+                    dir="ltr"
+                  >
                     {b}
                   </span>
                 ))}
@@ -172,17 +217,24 @@ export default function InstaPostMaker() {
 
       case 'dictionary':
         return (
-          <div className="flex flex-col justify-center h-full space-y-8 max-w-3xl mx-auto w-full">
-            <div className="flex items-center justify-center gap-3 text-amber-400">
+          <div className="flex flex-col justify-center h-full gap-7 max-w-3xl mx-auto w-full">
+            <div className="flex items-center justify-center gap-3" style={{ color: AMBER }}>
               <KeyRound className="w-9 h-9" />
-              <h2 className="text-4xl font-black text-white">{slide.tag || 'مصطلحات أساسية'}</h2>
+              <h2 className="text-4xl font-black" style={{ color: INK }}>{slide.tag || 'مصطلحات أساسية'}</h2>
             </div>
-            <div className="flex flex-col gap-4 w-full">
+            <div
+              className="flex flex-col w-full rounded-[1.75rem] overflow-hidden"
+              style={{ background: CARD, border: `1px solid ${HAIRLINE}` }}
+            >
               {slide.terms.map((t, idx) => (
-                <div key={idx} className="flex items-center justify-between bg-slate-900/80 backdrop-blur-md border border-slate-800 p-6 rounded-2xl shadow-lg">
-                  <span className="text-2xl font-black text-amber-400 flex-1 text-right">{t.ar}</span>
-                  <ArrowLeftRight className="w-6 h-6 text-slate-500 mx-6 shrink-0" />
-                  <span className="text-2xl font-black text-white flex-1 text-left" dir="ltr">{t.fr}</span>
+                <div
+                  key={idx}
+                  className="flex items-center justify-between px-7 py-5"
+                  style={{ borderBottom: idx < slide.terms.length - 1 ? `1px solid ${HAIRLINE}` : 'none' }}
+                >
+                  <span className="text-2xl font-black flex-1 text-right" style={{ color: AMBER }}>{t.ar}</span>
+                  <ArrowLeftRight className="w-6 h-6 mx-6 shrink-0" style={{ color: '#B8AD8F' }} />
+                  <span className="text-2xl font-black flex-1 text-left" style={{ color: INK }} dir="ltr">{t.fr}</span>
                 </div>
               ))}
             </div>
@@ -191,15 +243,16 @@ export default function InstaPostMaker() {
 
       case 'trap':
         return (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-6 max-w-3xl mx-auto">
-            <div className="p-5 bg-rose-500/10 rounded-full border-2 border-rose-500/30">
-              <AlertTriangle className="w-14 h-14 text-rose-500" />
-            </div>
-            <h2 className="text-4xl font-black text-rose-400">
+          <div className="flex flex-col items-center justify-center h-full text-center gap-7 max-w-3xl mx-auto">
+            <AlertTriangle className="w-12 h-12" style={{ color: '#C4463A' }} />
+            <h2 className="text-4xl font-black" style={{ color: '#C4463A' }}>
               {slide.tag || 'رد البال نهار الامتحان!'}
             </h2>
-            <div className="bg-slate-900/80 backdrop-blur-md p-8 rounded-[2rem] border border-rose-500/20 shadow-2xl">
-              <p className="text-2xl font-bold text-slate-200 leading-relaxed">
+            <div
+              className="p-8 rounded-[1.75rem]"
+              style={{ background: '#FDF1EF', border: '1px solid #F3D3CE' }}
+            >
+              <p className="text-2xl font-bold leading-relaxed" style={{ color: INK }}>
                 {slide.text}
               </p>
             </div>
@@ -210,35 +263,44 @@ export default function InstaPostMaker() {
         return (
           <div className="flex flex-col justify-center h-full max-w-3xl mx-auto w-full">
             <div className="grid grid-cols-2 gap-6 relative">
-              <div className="p-7 rounded-[2rem] border border-slate-800 bg-slate-900/80 backdrop-blur-md shadow-xl">
-                <h3 className="text-2xl font-black text-white text-center mb-6 pb-4 border-b border-slate-800">
+              <div
+                className="p-7 rounded-[1.75rem]"
+                style={{ background: CARD, border: `1px solid ${HAIRLINE}` }}
+              >
+                <h3 className="text-2xl font-black text-center mb-6 pb-4" style={{ color: INK, borderBottom: `1px solid ${HAIRLINE}` }}>
                   {slide.left.title}
                 </h3>
-                <ul className="space-y-4 text-xl font-bold text-slate-300">
+                <ul className="space-y-4 text-xl font-bold" style={{ color: BODY }}>
                   {slide.left.items.map((item, idx) => (
                     <li key={idx} className="flex items-center gap-3">
-                      <div className="w-2.5 h-2.5 rounded-full bg-rose-400 shrink-0" />
+                      <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: '#C4463A' }} />
                       <span dir="auto">{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="p-7 rounded-[2rem] border border-amber-500/30 bg-amber-500/5 backdrop-blur-md shadow-xl">
-                <h3 className="text-2xl font-black text-amber-400 text-center mb-6 pb-4 border-b border-amber-500/20">
+              <div
+                className="p-7 rounded-[1.75rem]"
+                style={{ background: '#FEF8EC', border: `1px solid ${AMBER_SOFT}55` }}
+              >
+                <h3 className="text-2xl font-black text-center mb-6 pb-4" style={{ color: AMBER, borderBottom: `1px solid ${AMBER_SOFT}55` }}>
                   {slide.right.title}
                 </h3>
-                <ul className="space-y-4 text-xl font-bold text-slate-300">
+                <ul className="space-y-4 text-xl font-bold" style={{ color: BODY }}>
                   {slide.right.items.map((item, idx) => (
                     <li key={idx} className="flex items-center gap-3">
-                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
+                      <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: '#3D8A5F' }} />
                       <span dir="auto">{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0B132B] border-2 border-amber-400 text-amber-400 text-xl font-black w-14 h-14 rounded-full flex items-center justify-center shadow-2xl z-10">
+              <div
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-black w-14 h-14 rounded-full flex items-center justify-center shadow-md"
+                style={{ background: CREAM, border: `2px solid ${AMBER_SOFT}`, color: AMBER }}
+              >
                 VS
               </div>
             </div>
@@ -247,66 +309,119 @@ export default function InstaPostMaker() {
 
       case 'quiz':
         return (
-          <div className="flex flex-col justify-center h-full space-y-6 max-w-3xl mx-auto w-full text-center">
-            <div className="flex items-center justify-center gap-2 text-amber-400">
+          <div className="flex flex-col justify-center h-full gap-6 max-w-3xl mx-auto w-full text-center">
+            <div className="flex items-center justify-center gap-2" style={{ color: AMBER }}>
               <HelpCircle className="w-8 h-8" />
-              <span className="text-lg font-black uppercase tracking-wider">سؤال اختبر بيه راسك</span>
+              <span className="text-lg font-black">سؤال اختبر بيه راسك</span>
             </div>
-            <h2 className="text-3xl font-black text-white leading-snug">
+            <h2 className="text-3xl font-black leading-snug" style={{ color: INK }}>
               {slide.question}
             </h2>
             <div className="space-y-3 pt-2">
               {slide.options.map((opt, i) => (
                 <div
                   key={i}
-                  className={`p-4 rounded-2xl border text-xl font-bold flex items-center justify-between shadow-md ${
+                  className="p-4 rounded-2xl text-xl font-bold flex items-center justify-between"
+                  style={
                     i === slide.correct
-                      ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300'
-                      : 'border-slate-800 bg-slate-900/80 text-slate-300'
-                  }`}
+                      ? { background: '#EEF7F1', border: '1px solid #BFE1CC', color: '#276A45' }
+                      : { background: CARD, border: `1px solid ${HAIRLINE}`, color: BODY }
+                  }
                 >
                   <span>{opt}</span>
                   {i === slide.correct && (
-                    <span className="text-xs bg-emerald-500 text-slate-950 px-3 py-1 rounded-lg font-black">الصحيحة</span>
+                    <span className="text-xs px-3 py-1 rounded-lg font-black" style={{ background: '#3D8A5F', color: '#fff' }}>
+                      الصحيحة
+                    </span>
                   )}
                 </div>
               ))}
             </div>
             {slide.explanation && (
-              <p className="text-lg font-bold text-slate-400 pt-2 leading-relaxed">
+              <p className="text-lg font-bold pt-2 leading-relaxed" style={{ color: BODY }}>
                 💡 {slide.explanation}
               </p>
             )}
           </div>
         );
 
+      case 'exercise':
+        return (
+          <div className="flex flex-col justify-center h-full gap-7 max-w-3xl mx-auto w-full">
+            <div className="flex flex-col gap-3">
+              <span className="text-lg font-black" style={{ color: AMBER }}>
+                {slide.tag || 'السؤال'}
+              </span>
+              <p className="text-2xl font-black leading-relaxed" style={{ color: INK }}>
+                {slide.question}
+              </p>
+            </div>
+
+            {slide.answer && (
+              <div
+                className="p-7 rounded-[1.75rem]"
+                style={{ background: '#EEF7F1', border: '1px solid #BFE1CC' }}
+              >
+                <span className="text-sm font-black" style={{ color: '#276A45' }}>الجواب</span>
+                <p className="text-xl font-bold leading-relaxed mt-2" style={{ color: INK }}>
+                  {slide.answer}
+                </p>
+              </div>
+            )}
+
+            {slide.steps && (
+              <div className="flex flex-col gap-4 text-right">
+                {slide.steps.map((step, i) => (
+                  <div key={i} className="flex items-start gap-4">
+                    <span
+                      className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-base font-black"
+                      style={{ background: AMBER_SOFT, color: INK }}
+                    >
+                      {i + 1}
+                    </span>
+                    <span className="text-xl font-bold leading-relaxed pt-0.5" style={{ color: BODY }}>
+                      {step}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
       case 'promo_cta':
         return (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-8 max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-lg font-black">
+          <div className="flex flex-col items-center justify-center h-full text-center gap-7 max-w-3xl mx-auto">
+            <div
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-lg font-black"
+              style={{ background: '#EEF7F1', color: '#276A45' }}
+            >
               <GraduationCap className="w-6 h-6" />
               <span>مرافقة شاملة لطلبة OFPPT</span>
             </div>
-            
-            <h2 className="text-4xl font-black text-white leading-snug">
+
+            <h2 className="text-4xl font-black leading-snug" style={{ color: INK }}>
               {slide.title}
             </h2>
-            
-            <p className="text-xl font-bold text-slate-400 max-w-xl">
+
+            <p className="text-xl font-bold max-w-xl" style={{ color: BODY }}>
               {slide.sub}
             </p>
 
-            <div className="w-full space-y-3.5 pt-2 text-right">
+            <div className="w-full space-y-3 pt-2 text-right">
               {slide.features.map((feat, i) => (
-                <div key={i} className="flex items-center gap-4 bg-slate-900/80 border border-slate-800 p-4 rounded-2xl">
-                  <CheckCircle2 className="w-6 h-6 text-amber-400 shrink-0" />
-                  <span className="text-xl font-bold text-slate-200">{feat}</span>
+                <div key={i} className="flex items-center gap-4">
+                  <CheckCircle2 className="w-6 h-6 shrink-0" style={{ color: AMBER }} />
+                  <span className="text-xl font-bold" style={{ color: INK }}>{feat}</span>
                 </div>
               ))}
             </div>
 
-            <div className="pt-4 flex items-center justify-center gap-3">
-              <div className="px-8 py-3.5 bg-gradient-to-r from-amber-400 to-[#FFB800] text-slate-950 rounded-2xl font-black text-xl shadow-xl flex items-center gap-3">
+            <div className="pt-3 flex items-center justify-center gap-3">
+              <div
+                className="px-8 py-3.5 rounded-2xl font-black text-xl shadow-md flex items-center gap-3"
+                style={{ background: AMBER_SOFT, color: INK }}
+              >
                 <span>دخل دابا وابدا التعلم</span>
                 <ArrowRight className="w-5 h-5 rotate-180" />
               </div>
@@ -316,7 +431,7 @@ export default function InstaPostMaker() {
 
       default:
         return (
-          <div className="flex flex-col items-center justify-center h-full text-slate-400 text-2xl font-bold">
+          <div className="flex flex-col items-center justify-center h-full text-2xl font-bold" style={{ color: BODY }}>
             شريحة من نوع {slide.type}
           </div>
         );
@@ -330,7 +445,7 @@ export default function InstaPostMaker() {
   return (
     <div className="min-h-screen bg-[#FBFBF7] p-6 select-none" dir="rtl">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* ================= CONTROLS ================= */}
         <div className="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col gap-5">
           <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
@@ -388,7 +503,7 @@ export default function InstaPostMaker() {
             <span className="text-xs font-black text-slate-500">
               معاينة المربع (1080 × 1080)
             </span>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={exportAllAsZip}
@@ -419,37 +534,53 @@ export default function InstaPostMaker() {
             </div>
           </div>
 
-          {/* Scaled Preview Frame */}
-          <div className="w-full overflow-hidden bg-slate-100 rounded-3xl border border-slate-200 flex justify-center items-center h-[620px]">
+          {/* Scaled Preview Frame — scale is computed from this wrapper's
+              real size (see the ResizeObserver above), so the canvas fills
+              the available space instead of floating tiny inside it. */}
+          <div
+            ref={frameWrapperRef}
+            className="w-full overflow-hidden bg-slate-100 rounded-3xl border border-slate-200 flex justify-center items-center h-[70vh] min-h-[480px]"
+          >
             {currentSlide ? (
+              // Preview-only scaler: the transform lives HERE, never on printRef
+              // itself. html-to-image reads printRef's own (untransformed)
+              // layout box, so the exported PNG is always the full 1080x1080
+              // canvas with its background — never a shrunken image inside
+              // an empty frame.
               <div
-                ref={printRef}
-                className="shrink-0 bg-[#0B132B] w-[1080px] h-[1080px] relative overflow-hidden flex flex-col justify-between font-[family-name:var(--font-tajawal)] p-14"
+                className="shrink-0"
                 style={{
-                  transform: 'scale(0.52)',
+                  width: 1080,
+                  height: 1080,
+                  transform: `scale(${scale})`,
                   transformOrigin: 'center'
                 }}
               >
-                {/* Background Decor */}
-                <div className="absolute top-0 right-0 w-[550px] h-[550px] bg-amber-500/10 rounded-full blur-[130px] pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-sky-500/10 rounded-full blur-[110px] pointer-events-none" />
-
+              <div
+                ref={printRef}
+                className="w-[1080px] h-[1080px] relative overflow-hidden flex flex-col justify-between font-[family-name:var(--font-tajawal)] p-16"
+                style={{ background: CREAM }}
+              >
                 {/* Top Header */}
-                <header className="flex justify-between items-center shrink-0 z-10 border-b border-slate-800/80 pb-6">
+                <header className="flex justify-between items-center shrink-0 z-10 pb-7" style={{ borderBottom: `1px solid ${HAIRLINE}` }}>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-[#FFB800] flex items-center justify-center text-slate-950 shadow-md">
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm" style={{ background: AMBER_SOFT, color: INK }}>
                       <Zap className="w-6 h-6 fill-current" />
                     </div>
-                    <span className="font-black text-2xl tracking-tight text-white">
-                      RR <span className="text-[#FFB800]">GESTION</span>
+                    <span className="font-black text-2xl tracking-tight" style={{ color: INK }}>
+                      RR <span style={{ color: AMBER }}>GESTION</span>
                     </span>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="bg-amber-400/10 border border-amber-400/30 px-4 py-2 rounded-xl text-amber-400 text-lg font-black font-mono" dir="ltr">
+                    <div
+                      className="px-4 py-2 rounded-xl text-lg font-black font-mono"
+                      style={{ background: 'rgba(201,122,25,0.08)', color: AMBER }}
+                      dir="ltr"
+                    >
                       {String(selectedSlideIndex + 1).padStart(2, '0')} / {String(totalSlides).padStart(2, '0')}
                     </div>
-                    <div className="bg-slate-800 border border-slate-700 px-5 py-2 rounded-xl text-amber-400 text-lg font-black">
+                    <div className="px-5 py-2 rounded-xl text-lg font-black" style={{ background: CARD, border: `1px solid ${HAIRLINE}`, color: AMBER }}>
                       {parsedData?.badge || 'TSGE'}
                     </div>
                   </div>
@@ -461,42 +592,47 @@ export default function InstaPostMaker() {
                 </main>
 
                 {/* Bottom Footer مع التناوب بين Mr. RR و Ms. RR */}
-                <footer className="flex items-center justify-between shrink-0 z-10 border-t border-slate-800/80 pt-6">
-                  <div className="bg-slate-900/80 border border-slate-800 px-6 py-2.5 rounded-xl">
-                    <p className="text-slate-400 font-bold text-lg tracking-wider" dir="ltr">
+                <footer className="flex items-center justify-between shrink-0 z-10 pt-7" style={{ borderTop: `1px solid ${HAIRLINE}` }}>
+                  <div className="px-6 py-2.5 rounded-xl" style={{ background: CARD, border: `1px solid ${HAIRLINE}` }}>
+                    <p className="font-bold text-lg tracking-wider" style={{ color: '#8A8064' }} dir="ltr">
                       🔗 rrgestion.vercel.app
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-slate-400 font-bold text-lg">تسيير المقاولات</span>
+                    <span className="font-bold text-lg" style={{ color: '#8A8064' }}>تسيير المقاولات</span>
                     {currentSlide.type === 'promo_cta' ? (
                       <div className="flex -space-x-4">
                         <img
                           src={mrRrImg}
                           alt="Mr RR"
-                          className="w-16 h-16 object-cover rounded-xl border-2 border-amber-400 shadow-md bg-white z-10"
+                          className="w-16 h-16 object-cover rounded-xl shadow-sm bg-white z-10"
+                          style={{ border: `2px solid ${AMBER_SOFT}` }}
                         />
                         <img
                           src={msRrImg}
                           alt="Ms RR"
-                          className="w-16 h-16 object-cover rounded-xl border-2 border-rose-400 shadow-md bg-white"
+                          className="w-16 h-16 object-cover rounded-xl shadow-sm bg-white"
+                          style={{ border: '2px solid #E8A9A0' }}
                         />
                       </div>
                     ) : isMsTurn ? (
                       <img
                         src={msRrImg}
                         alt="Ms RR"
-                        className="w-16 h-16 object-cover rounded-xl border-2 border-rose-400 shadow-md bg-white"
+                        className="w-16 h-16 object-cover rounded-xl shadow-sm bg-white"
+                        style={{ border: '2px solid #E8A9A0' }}
                       />
                     ) : (
                       <img
                         src={mrRrImg}
                         alt="Mr RR"
-                        className="w-16 h-16 object-cover rounded-xl border-2 border-amber-400 shadow-md bg-white"
+                        className="w-16 h-16 object-cover rounded-xl shadow-sm bg-white"
+                        style={{ border: `2px solid ${AMBER_SOFT}` }}
                       />
                     )}
                   </div>
                 </footer>
+              </div>
               </div>
             ) : (
               <div className="text-slate-400 font-bold text-sm">حط كود الـ JSON باش تبان المعاينة هنا</div>
