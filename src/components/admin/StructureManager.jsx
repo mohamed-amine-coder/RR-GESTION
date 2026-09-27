@@ -1,4 +1,4 @@
-import { FolderPlus, Layers, PlusCircle } from 'lucide-react';
+import { FolderPlus, Layers, PlusCircle, Trash2 } from 'lucide-react';
 
 export default function StructureManager({
   newMod,
@@ -9,6 +9,8 @@ export default function StructureManager({
   handleAddChapter,
   modules,
   loadingAction,
+  handleDeleteModule,
+  handleDeleteChapter,
 }) {
   return (
     <div className="grid md:grid-cols-2 gap-8">
@@ -92,6 +94,37 @@ export default function StructureManager({
         <button onClick={handleAddChapter} disabled={loadingAction} className="w-full py-3 bg-[#0F172A] hover:bg-slate-800 disabled:opacity-50 text-white font-black rounded-xl transition flex items-center justify-center gap-2">
           <PlusCircle className="w-5 h-5" /> حفظ الفصل
         </button>
+      </div>
+
+      <div className="md:col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-black text-xl text-slate-900 flex items-center gap-2">
+            <FolderPlus className="text-rose-500" /> القوائم الحالية
+          </h3>
+        </div>
+
+        <div className="space-y-3">
+          {modules.length === 0 ? (
+            <div className="text-sm text-slate-500 font-bold">لا توجد موديلات حتى الآن.</div>
+          ) : (
+            modules.map(module => (
+              <div key={module.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                <div className="flex-1">
+                  <div className="text-xs font-black text-slate-500">{module.semestre}</div>
+                  <div className="font-black text-slate-800">{module.title}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteModule(module.id)}
+                  className="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 p-2.5 text-rose-600 transition hover:bg-rose-100"
+                  aria-label={`Delete module ${module.title}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

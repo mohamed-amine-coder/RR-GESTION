@@ -67,6 +67,102 @@ export default function useAdminDashboard() {
     else setEditorSlides([]);
   };
 
+  const handleDeleteModule = async (moduleId) => {
+    if (!moduleId) return;
+    const confirmed = window.confirm('هل أنت متأكد من حذف هذا الموديل؟');
+    if (!confirmed) return;
+
+    setLoadingAction(true);
+    try {
+      const { error } = await supabase.from('modules').delete().eq('id', moduleId);
+      if (error) throw error;
+      alert('تم حذف الموديل بنجاح!');
+      fetchModules();
+    } catch (err) {
+      alert('وقع خطأ: ' + err.message);
+    } finally {
+      setLoadingAction(false);
+    }
+  };
+
+  const handleDeleteChapter = async (chapterId) => {
+    if (!chapterId) return;
+    const confirmed = window.confirm('هل أنت متأكد من حذف هذا الفصل وكل السلايدات التابعة له؟');
+    if (!confirmed) return;
+
+    setLoadingAction(true);
+    try {
+      const { error: slidesError } = await supabase.from('slides').delete().eq('chapter_id', chapterId);
+      if (slidesError) throw slidesError;
+
+      const { error: chapterError } = await supabase.from('chapters').delete().eq('id', chapterId);
+      if (chapterError) throw chapterError;
+
+      setEditChapterId('');
+      setEditorSlides([]);
+      alert('تم حذف الفصل والسلايدات التابعة له بنجاح!');
+      fetchEditorChapters(editModuleId);
+    } catch (err) {
+      alert('وقع خطأ: ' + err.message);
+    } finally {
+      setLoadingAction(false);
+    }
+  };
+
+  const handleDeleteSlide = async (slideId) => {
+    if (!slideId) return;
+    const confirmed = window.confirm('هل أنت متأكد من حذف هذا السلايد؟');
+    if (!confirmed) return;
+
+    setIsSavingJson(true);
+    try {
+      const { error } = await supabase.from('slides').delete().eq('id', slideId);
+      if (error) throw error;
+      setSelectedSlide(null);
+      setJsonTextarea('');
+      alert('تم حذف السلايد بنجاح!');
+      fetchEditorSlides(editChapterId);
+    } catch (err) {
+      alert('وقع خطأ: ' + err.message);
+    } finally {
+      setIsSavingJson(false);
+    }
+  };
+
+  const handleAddEmptySlide = async () => {
+    if (!editChapterId) return alert('المرجو اختيار الفصل أولاً!');
+
+    setIsSavingJson(true);
+    try {
+      const { data: existingSlides, error: fetchError } = await supabase
+        .from('slides')
+        .select('order_index')
+        .eq('chapter_id', editChapterId);
+
+      if (fetchError) throw fetchError;
+
+      const maxOrder = (existingSlides || []).reduce((max, slide) => Math.max(max, Number(slide.order_index) || 0), 0);
+      const nextOrder = maxOrder + 1;
+
+      const newSlide = {
+        chapter_id: editChapterId,
+        type: 'concept',
+        content: { type: 'concept', title: 'Slide vide', body: [] },
+        order_index: nextOrder
+      };
+
+      const { error: insertError } = await supabase.from('slides').insert([newSlide]);
+      if (insertError) throw insertError;
+
+      alert('تم إضافة سلايد جديد بنجاح!');
+      fetchEditorSlides(editChapterId);
+    } catch (err) {
+      alert('وقع خطأ: ' + err.message);
+    } finally {
+      setIsSavingJson(false);
+    }
+  };
+
   const saveSlideJson = async () => {
     if (!selectedSlide || !selectedSlide.id) return alert('المرجو اختيار السلايد أولاً!');
 
@@ -338,5 +434,9 @@ export default function useAdminDashboard() {
     saveSlideJson,
     fetchEditorChapters,
     fetchEditorSlides,
+    handleDeleteModule,
+    handleDeleteChapter,
+    handleDeleteSlide,
+    handleAddEmptySlide,
   };
 }

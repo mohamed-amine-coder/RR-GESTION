@@ -43,6 +43,10 @@ export default function AdminDashboard() {
     setJsonTextarea,
     isSavingJson,
     saveSlideJson,
+    handleDeleteModule,
+    handleDeleteChapter,
+    handleDeleteSlide,
+    handleAddEmptySlide,
   } = useAdminDashboard();
 
   return (
@@ -75,6 +79,8 @@ export default function AdminDashboard() {
               handleAddChapter={handleAddChapter}
               modules={modules}
               loadingAction={loadingAction}
+              handleDeleteModule={handleDeleteModule}
+              handleDeleteChapter={handleDeleteChapter}
             />
           )}
 
@@ -106,6 +112,9 @@ export default function AdminDashboard() {
               setJsonTextarea={setJsonTextarea}
               saveSlideJson={saveSlideJson}
               isSavingJson={isSavingJson}
+              handleDeleteChapter={handleDeleteChapter}
+              handleDeleteSlide={handleDeleteSlide}
+              handleAddEmptySlide={handleAddEmptySlide}
             />
           )}
         </div>

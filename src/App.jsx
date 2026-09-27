@@ -18,6 +18,7 @@ const Presentation = lazy(() => import('./pages/public/Presentation'));
 const AdminRoute = lazy(() => import('./components/admin/AdminRoute'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminWaitlist = lazy(() => import('./pages/admin/AdminWaitlist'));
+const AdminSheetMaker = lazy(() => import('./pages/admin/SheetMaker'));
 
 export default function App() {
   return (
@@ -53,6 +54,15 @@ export default function App() {
                   element={
                     <AdminRoute>
                       <AdminWaitlist />
+                    </AdminRoute>
+                  }
+                />
+
+                <Route
+                  path="/admin/sheetMaker"
+                  element={
+                    <AdminRoute>
+                      <AdminSheetMaker />
                     </AdminRoute>
                   }
                 />

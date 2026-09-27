@@ -1,4 +1,4 @@
-import { Save } from 'lucide-react';
+import { PlusCircle, Save, Trash2 } from 'lucide-react';
 
 export default function ContentEditorManager({
   modules,
@@ -14,6 +14,9 @@ export default function ContentEditorManager({
   setJsonTextarea,
   saveSlideJson,
   isSavingJson,
+  handleDeleteChapter,
+  handleDeleteSlide,
+  handleAddEmptySlide,
 }) {
   return (
     <div className="grid md:grid-cols-2 gap-8">
@@ -32,19 +35,43 @@ export default function ContentEditorManager({
 
         <div>
           <label className="block text-xs font-black text-slate-700 mb-1.5">اختار الفصل</label>
-          <select
-            value={editChapterId}
-            onChange={e => setEditChapterId(e.target.value)}
-            disabled={!editModuleId}
-            className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold bg-slate-50 outline-none focus:border-slate-900"
-          >
-            <option value="">-- اختار الفصل --</option>
-            {editorChapters.map(c => <option key={c.id} value={c.id}>{c.order_index}. {c.title_ar}</option>)}
-          </select>
+          <div className="flex gap-2">
+            <select
+              value={editChapterId}
+              onChange={e => setEditChapterId(e.target.value)}
+              disabled={!editModuleId}
+              className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold bg-slate-50 outline-none focus:border-slate-900"
+            >
+              <option value="">-- اختار الفصل --</option>
+              {editorChapters.map(c => <option key={c.id} value={c.id}>{c.order_index}. {c.title_ar}</option>)}
+            </select>
+
+            <button
+              type="button"
+              title="Delete Chapter and all its slides"
+              onClick={() => handleDeleteChapter(editChapterId)}
+              disabled={!editChapterId || isSavingJson}
+              className="inline-flex items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 p-3.5 text-rose-600 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Delete selected chapter"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div className="space-y-2">
-          <div className="text-xs font-black text-slate-500">قائمة السلايدات</div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-xs font-black text-slate-500">قائمة السلايدات</div>
+            <button
+              type="button"
+              onClick={handleAddEmptySlide}
+              disabled={!editChapterId || isSavingJson}
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-[11px] font-black text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <PlusCircle className="w-4 h-4" />
+              Add slide
+            </button>
+          </div>
           <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
             {editorSlides.map(s => (
               <button
@@ -79,14 +106,24 @@ export default function ContentEditorManager({
               dir="ltr"
             />
 
-            <div className="mt-4">
+            <div className="mt-4 flex gap-3">
               <button
                 onClick={saveSlideJson}
                 disabled={isSavingJson}
-                className="py-3.5 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-2xl transition cursor-pointer flex items-center justify-center gap-2 w-full"
+                className="py-3.5 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-2xl transition cursor-pointer flex items-center justify-center gap-2 flex-1"
               >
                 <Save className="w-4 h-4" />
                 <span>{isSavingJson ? 'جاري الحفظ...' : 'حفظ التغييرات'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDeleteSlide(selectedSlide.id)}
+                disabled={isSavingJson}
+                className="inline-flex items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 p-3.5 text-rose-600 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Delete selected slide"
+              >
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           </>

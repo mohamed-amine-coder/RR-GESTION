@@ -132,6 +132,7 @@
 // }
 
 
+
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import LoadingScreen from '../components/common/LoadingScreen';
@@ -144,51 +145,112 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const hydrateProfile = useCallback(async (nextUser) => {
-    if (!nextUser?.id) {
-      setProfile(null);
+  const fetchProfile = useCallback(async (userId) => {
+  if (!userId) {
+    setProfile(null);
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, role, full_name, email')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('[Profile fetch error]:', error.message);
+      // إذا كان التوكن منتهي أو verification failed، نمسحو الجلسة نهائياً باش نحبسو الـ loop
+      if (error.message?.includes('JWT') || error.code === 'PGRST301') {
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        setProfile(null);
+      }
       return;
     }
 
-    try {
-      const { data: nextProfile, error } = await supabase
-        .from('profiles')
-        .select('id, role, full_name, email')
-        .eq('id', nextUser.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching profile:', error.message);
-      }
-      setProfile(nextProfile ?? null);
-    } catch (err) {
-      console.error('Unexpected error fetching profile:', err);
-      setProfile(null);
+    if (data) {
+      setProfile(data);
     }
-  }, []);
+  } catch (err) {
+    console.error('[Unexpected profile error]:', err);
+  }
+}, []);
 
   useEffect(() => {
     let isMounted = true;
 
-    // 1. استخدام onAuthStateChange فقط كمصدر وحيد للحقيقة
+    const initSession = async () => {
+      try {
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+
+        if (error || !initialSession) {
+          if (isMounted) setLoading(false);
+          return;
+        }
+
+        // واش التوكن مسالي؟
+        const isExpired = initialSession.expires_at 
+          ? initialSession.expires_at <= Math.floor(Date.now() / 1000)
+          : false;
+
+        if (isExpired) {
+          console.log('[Auth] Token expired on init, refreshing...');
+          const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
+          
+          if (refreshErr || !refreshed?.session) {
+            console.warn('[Auth] Refresh failed, signing out clean');
+            await supabase.auth.signOut();
+            if (isMounted) {
+              setSession(null);
+              setUser(null);
+              setProfile(null);
+              setLoading(false);
+            }
+            return;
+          }
+
+          if (isMounted) {
+            setSession(refreshed.session);
+            setUser(refreshed.session.user);
+            await fetchProfile(refreshed.session.user.id);
+            setLoading(false);
+          }
+        } else {
+          if (isMounted) {
+            setSession(initialSession);
+            setUser(initialSession.user);
+            await fetchProfile(initialSession.user.id);
+            setLoading(false);
+          }
+        }
+      } catch (e) {
+        console.error('[Auth init error]:', e);
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    initSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         if (!isMounted) return;
 
-        console.log(`[Auth Event]: ${event}`);
-
-        const currentUser = currentSession?.user ?? null;
-        setSession(currentSession ?? null);
-        setUser(currentUser);
-
-        if (currentUser) {
-          await hydrateProfile(currentUser);
-        } else {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          const nextUser = currentSession?.user ?? null;
+          setSession(currentSession);
+          setUser(nextUser);
+          if (nextUser) {
+            await fetchProfile(nextUser.id);
+          }
+          setLoading(false);
+        } else if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
           setProfile(null);
+          setLoading(false);
         }
-
-        // إيقاف الـ loading بمجرد الحصول على أول استجابة من Supabase
-        setLoading(false);
       }
     );
 
@@ -196,7 +258,7 @@ export function AuthProvider({ children }) {
       isMounted = false;
       subscription?.unsubscribe?.();
     };
-  }, [hydrateProfile]);
+  }, [fetchProfile]);
 
   const signInWithGoogle = useCallback(async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -214,10 +276,10 @@ export function AuthProvider({ children }) {
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error.message);
-      throw error;
-    }
+    if (error) console.error('Error signing out:', error.message);
+    setUser(null);
+    setProfile(null);
+    setSession(null);
   }, []);
 
   const hasActiveModuleAccess = useCallback(async (moduleId) => {
@@ -265,3 +327,4 @@ export function useAuth() {
   }
   return context;
 }
+
