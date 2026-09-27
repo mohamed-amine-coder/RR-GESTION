@@ -131,7 +131,7 @@ export default function Home() {
                 className="text-white font-black text-xl md:text-3xl uppercase leading-tight" 
                 style={{ textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}
               >
-                <span className="text-amber-400">LA COMPTABILITÉ</span><br/>
+                <span className="text-amber-400">GESTION DES ENTREPRISES</span><br/>
                 Kima 3emrek Cheftiha!
               </h3>
             </div>
@@ -146,7 +146,7 @@ export default function Home() {
                     TRAILER OFFICIEL
                   </p>
                   <p className="text-amber-400 font-bold text-[10px] flex items-center gap-1 mt-0.5">
-                    <Sparkles className="w-2.5 h-2.5" /> En cours de montage...
+                    <Sparkles className="w-2.5 h-2.5" /> En cours de montage
                   </p>
                 </div>
               </div>
@@ -165,7 +165,7 @@ export default function Home() {
             className="mt-5"
           >
             <Link 
-              to="/premium"
+              to="/waitlist"
               className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg transition-transform transform hover:-translate-y-0.5"
             >
               <Zap className="w-4 h-4" />
