@@ -40,7 +40,7 @@ export default function Waitlist() {
         {/* مقدمة الصفحة */}
         <div className="text-center mb-6">
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 mb-1">
-            ختار السؤال لي فبالك وتواصل معنا فواتساب 💬
+            أشنو السؤال لي فبالك؟ نجاوبوك عليه بكل فرح 😊 💬
           </h1>
         </div>
 

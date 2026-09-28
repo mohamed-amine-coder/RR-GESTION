@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Zap, Home, BookOpen, UserPlus, User, Menu, X, ChevronDown, LogOut, Sparkles, ShieldCheck, MessageCircle, ArrowLeft, Crown, GraduationCap, LayoutDashboard } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Zap, Home, BookOpen, UserPlus, User, Menu, X, ChevronDown, 
+  LogOut, Sparkles, ShieldCheck, MessageCircle, ArrowLeft, 
+  Crown, GraduationCap, LayoutDashboard, CheckCircle2 
+} from 'lucide-react';import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Navbar() {
@@ -15,6 +18,7 @@ export default function Navbar() {
   const centerLinks = [
     { label: 'الرئيسية', path: '/', icon: Home },
     { label: 'الموديلات', path: '/modules', icon: BookOpen },
+    { label: 'تتبع المراجعة', path: '/tracker', icon: CheckCircle2 },
     { label: 'كيفاش كنقراو؟', path: '/about', icon: Sparkles },
   ];
 

@@ -38,7 +38,7 @@ export default function Home() {
 
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
               <Link 
-                to="/modules"
+                to="/tracker"
                 className="px-6 py-3 bg-[#0F172A] hover:bg-slate-800 text-white font-black text-sm rounded-xl shadow-md transition-all flex items-center gap-2 group cursor-pointer"
               >
                 <span>استكشف الموديلات</span>
