@@ -102,7 +102,7 @@ export default function Home() {
               سلسلة الشرح <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">الواقعي 🎬</span>
             </h2>
             <p className="text-slate-400 font-bold text-xs md:text-sm max-w-md mx-auto leading-relaxed">
-              سلسلة دروس بأساتذة حقيقيين، متاحة <span className="text-white bg-emerald-600 px-1.5 py-0.5 rounded mx-1 shadow-sm">مجاناً</span> لجميع المشتركين.
+              سلسلة دروس بأساتذة حقيقيين، متاحة <span className="text-white bg-emerald-600 px-1.5 py-0.5 rounded mx-1 shadow-sm">قريبا</span> لجميع المشتركين.
             </p>
           </motion.div>
 
