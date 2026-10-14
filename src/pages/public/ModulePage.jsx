@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { BookOpen, Sparkles, CheckCircle2, Lock, Layout, X, MessageCircle, TicketCheck } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { BookOpen, CheckCircle2, Layout, Lock, MessageCircle, Sparkles, TicketCheck, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingScreen from '../../components/common/LoadingScreen';
+
+const WHATSAPP_NUMBER = '212647400201';
 
 export default function ModulePage() {
   const { moduleId } = useParams();
   const navigate = useNavigate();
   const { user, loading: authLoading, hasActiveModuleAccess } = useAuth();
-  
+
   const [moduleData, setModuleData] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -20,21 +22,11 @@ export default function ModulePage() {
   useEffect(() => {
     const fetchModuleDetails = async () => {
       setLoading(true);
-      
-      const { data: modData } = await supabase
-        .from('modules')
-        .select('*')
-        .eq('id', moduleId)
-        .single();
-        
+
+      const { data: modData } = await supabase.from('modules').select('*').eq('id', moduleId).single();
       if (modData) setModuleData(modData);
 
-      const { data: chapsData } = await supabase
-        .from('chapters')
-        .select('*')
-        .eq('module_id', moduleId)
-        .order('order_index');
-        
+      const { data: chapsData } = await supabase.from('chapters').select('*').eq('module_id', moduleId).order('order_index');
       if (chapsData) setChapters(chapsData);
 
       if (user?.id) {
@@ -49,13 +41,8 @@ export default function ModulePage() {
     fetchModuleDetails();
   }, [moduleId, user?.id, hasActiveModuleAccess]);
 
-  const openPaywall = (chapter) => {
-    setSelectedChapter(chapter);
-  };
-
-  const closePaywall = () => {
-    setSelectedChapter(null);
-  };
+  const openPaywall = (chapter) => setSelectedChapter(chapter);
+  const closePaywall = () => setSelectedChapter(null);
 
   const handleWaitlist = () => {
     closePaywall();
@@ -64,11 +51,15 @@ export default function ModulePage() {
 
   const handleWhatsApp = () => {
     if (!selectedChapter) return;
+
+    const chapterTitle = selectedChapter.title_ar || selectedChapter.title || '';
+    const moduleTitle = moduleData?.title || '';
     const message = encodeURIComponent(
-      `سلام، بغيت نفتح الفصل "${selectedChapter.title_ar || selectedChapter.title || ''}" من موديل "${moduleData?.title || ''}".`
+      `سلام، بغيت نفتح الفصل "${chapterTitle}" من الموديل "${moduleTitle}". كاينني محتاج معلومات الدفع والتفعيل.`
     );
+
     closePaywall();
-    window.open(`https://wa.me/212600000000?text=${message}`, '_blank', 'noopener,noreferrer');
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank', 'noopener,noreferrer');
   };
 
   if (authLoading || loading) {
@@ -77,144 +68,156 @@ export default function ModulePage() {
 
   if (!moduleData) {
     return (
-      <div className="min-h-screen bg-[#FBFBF7] flex flex-col items-center justify-center gap-4">
-        <div className="font-black text-xl text-rose-500">هاد الموديل ماكاينش!</div>
-        <Link to="/modules" className="px-6 py-2 bg-[#0F172A] text-white font-bold rounded-xl">الرجوع للموديلات</Link>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#FBFBF7]">
+        <div className="text-xl font-black text-rose-500">هاد الموديل ماكاينش!</div>
+        <Link to="/modules" className="rounded-xl bg-[#0F172A] px-6 py-2 font-bold text-white">
+          الرجوع للموديلات
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FBFBF7] select-none pb-24" dir="rtl">
-      
-      {/* 1. DARK HERO SECTION */}
-      <section className="bg-[#0B132B] text-white pt-14 pb-20 px-4 relative overflow-hidden">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-          
-          <div className="order-2 md:order-1 bg-[#162033]/90 border border-white/10 rounded-3xl p-6 text-center min-w-[200px] shadow-2xl">
-            <span className="text-xs font-bold text-slate-300 block mb-1">ثمن الاشتراك</span>
-            <div className="flex items-baseline justify-center gap-1.5" dir="ltr">
-              <span className="text-xs font-black text-slate-400">DH</span>
-              <span className="text-4xl font-black text-white">{moduleData.price}</span>
+    <div className="min-h-screen bg-[#FBFBF7] pb-24 text-slate-900 select-none" dir="rtl">
+      <section className="relative overflow-hidden bg-[#0F172A] px-4 pb-20 pt-14 text-white">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
+            <div className="min-w-[200px] rounded-[2rem] border border-white/10 bg-[#162033]/90 p-6 text-center shadow-2xl md:order-1">
+              <span className="mb-1 block text-xs font-bold text-slate-300">ثمن الاشتراك</span>
+              <div className="flex items-baseline justify-center gap-1.5" dir="ltr">
+                <span className="text-xs font-black text-slate-400">DH</span>
+                <span className="text-4xl font-black text-white">{moduleData.price}</span>
+              </div>
+              <span className="mt-2 block text-[10px] font-black uppercase tracking-widest text-amber-400">
+                FULL ACCESS
+              </span>
             </div>
-            <span className="text-[10px] font-black text-amber-400 tracking-widest block mt-2 uppercase">
-              FULL ACCESS
-            </span>
-          </div>
 
-          <div className="order-1 md:order-2 text-center md:text-right flex-1">
-            <span className="inline-flex items-center gap-1.5 bg-[#FFB800] text-slate-950 px-3.5 py-1 rounded-lg text-xs font-black mb-4 uppercase tracking-wider">
-              <Layout className="w-3.5 h-3.5" />
-              <span>{moduleData.semestre}</span>
-            </span>
-            <h1 className="text-3xl md:text-5xl font-black text-white mb-3 tracking-tight" dir="ltr">
-              {moduleData.title}
-            </h1>
-            <p className="text-slate-400 text-sm md:text-base font-bold max-w-xl leading-relaxed">
-              {moduleData.description}
-            </p>
-          </div>
+            <div className="flex-1 text-center md:order-2 md:text-right">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#FFB800] px-3.5 py-1.5 text-xs font-black text-slate-950">
+                <Layout className="h-3.5 w-3.5" />
+                <span>{moduleData.semestre}</span>
+              </span>
 
+              <h1 className="mt-4 text-2xl font-black leading-tight text-white sm:text-3xl md:text-4xl" dir="ltr">
+                {moduleData.title}
+              </h1>
+
+              <p className="mx-auto mt-3 max-w-xl text-sm font-bold leading-relaxed text-slate-300 sm:text-base md:mx-0">
+                {moduleData.description}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* 2. FLOATING STATS PILL */}
-      <div className="max-w-3xl mx-auto px-4 -mt-8 relative z-20">
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-md flex items-center justify-around text-xs md:text-sm font-black text-slate-800">
+      <div className="relative z-20 mx-auto -mt-8 max-w-5xl px-4 sm:px-6">
+        <div className="flex items-center justify-around rounded-[1.5rem] border border-slate-200 bg-white p-4 text-xs font-black text-slate-800 shadow-md md:text-sm">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-600" />
+            <Sparkles className="h-4 w-4 text-purple-600" />
             <span>ملخصات ذكية</span>
           </div>
-          <div className="w-px h-6 bg-slate-200" />
+          <div className="h-6 w-px bg-slate-200" />
           <div className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-sky-600" />
+            <BookOpen className="h-4 w-4 text-sky-600" />
             <span>{chapters.length} فصول</span>
           </div>
         </div>
       </div>
 
-      {/* 3. SECTION DIVIDER */}
-      <div className="max-w-3xl mx-auto px-4 mt-12 mb-6">
+      <div className="mx-auto mt-12 max-w-5xl px-4 sm:px-6">
         <div className="relative flex items-center justify-center">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-slate-200" />
           </div>
-          <span className="relative bg-[#FBFBF7] px-6 text-base font-black text-slate-900">
-            فهرس الدروس
-          </span>
+          <span className="relative bg-[#FBFBF7] px-6 text-base font-black text-slate-900">فهرس الدروس</span>
         </div>
       </div>
 
-      {/* 4. CHAPTER CARDS LIST */}
-      <div className="max-w-3xl mx-auto px-4 space-y-4">
+      <div className="mx-auto mt-6 max-w-5xl space-y-4 px-4 sm:px-6">
         {chapters.map((ch, idx) => {
           const canAccess = ch.is_free || isSubscribed;
+          const isFree = Boolean(ch.is_free);
+          const isLocked = !isFree && !isSubscribed;
+
           return (
             <motion.div
               key={ch.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              className="bg-white border border-slate-200/80 rounded-[2rem] p-5 md:p-6 shadow-xs flex flex-col-reverse md:flex-row md:items-center justify-between gap-4"
+              transition={{ delay: idx * 0.04 }}
+              className={`rounded-[2rem] border p-5 md:p-6 ${
+                isFree
+                  ? 'border-emerald-300 bg-emerald-50/60 shadow-sm shadow-emerald-100'
+                  : isLocked
+                    ? 'border-amber-200 bg-amber-50/60 shadow-sm shadow-amber-100'
+                    : 'border-slate-200 bg-white shadow-sm'
+              }`}
             >
-              <div className="w-full md:w-auto shrink-0 mt-3 md:mt-0">
-                {canAccess ? (
-                  <Link
-                    to={`/viewer/${ch.id}`}
-                    className="w-full md:w-auto justify-center px-6 py-2.5 bg-[#0F172A] hover:bg-slate-800 text-white text-xs md:text-sm font-black rounded-xl transition shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
-                  >
-                    <span>بدا الدرس</span>
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => openPaywall(ch)}
-                    className="w-full md:w-auto justify-center px-6 py-2.5 bg-gradient-to-r from-amber-400 to-[#FFB800] hover:from-amber-300 hover:to-amber-400 text-slate-950 text-xs md:text-sm font-black rounded-xl transition shadow-md shadow-amber-200/70 flex items-center gap-1.5 active:scale-95 cursor-pointer"
-                  >
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>افتح الدرس</span>
-                  </button>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-4 flex-1 justify-end text-right w-full md:w-auto">
-                <div>
-                  <h3 className="text-sm md:text-base font-black text-slate-900 mb-1 leading-snug">
-                    {ch.title_ar}
-                  </h3>
-                  <div className="flex items-center justify-end gap-2 flex-wrap">
-                    {ch.badge && (
-                      <span className="text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2.5 py-0.5 rounded-lg">
-                        {ch.badge}
-                      </span>
-                    )}
-                    {ch.is_free && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-lg">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        <span>فابور</span>
-                      </span>
-                    )}
-                  </div>
+              <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+                <div className="w-full md:w-auto">
+                  {canAccess ? (
+                    <Link
+                      to={`/viewer/${ch.id}`}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F172A] px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-slate-800 md:w-auto"
+                    >
+                      <span>{isFree ? 'بدا تقرا الدرس دابا ▶' : 'بدا الدرس'}</span>
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => openPaywall(ch)}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#FFB800] px-6 py-3 text-sm font-black text-slate-950 shadow-md shadow-amber-200/70 transition hover:bg-[#f5ad00] md:w-auto"
+                    >
+                      <Lock className="h-4 w-4" />
+                      <span>افتح الدرس الكامل 🔒</span>
+                    </button>
+                  )}
                 </div>
-                
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-base shrink-0 ${
-                  ch.is_free
-                     ? 'bg-emerald-100/70 text-emerald-700'
-                     : 'bg-slate-100 text-slate-400'
-                }`}>
-                  {ch.order_index || idx + 1}
+
+                <div className="flex w-full flex-1 items-center justify-end gap-4 text-right md:w-auto">
+                  <div>
+                    <h3 className="text-sm font-black leading-snug text-slate-900 md:text-base">{ch.title_ar}</h3>
+
+                    <div className="mt-1 flex flex-wrap items-center justify-end gap-2">
+                      {ch.badge && (
+                        <span className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-bold text-slate-500">
+                          {ch.badge}
+                        </span>
+                      )}
+
+                      {isFree ? (
+                        <span className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-100 px-2.5 py-0.5 text-[11px] font-black text-emerald-700">
+                          <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                          <span>🎁 فصل مجاني للتجربة (بلا حساب)</span>
+                        </span>
+                      ) : !isSubscribed ? (
+                        <span className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-100 px-2.5 py-0.5 text-[11px] font-black text-amber-700">
+                          <Lock className="h-3 w-3" />
+                          <span>مدفوع</span>
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div
+                    className={`flex h-12 w-12 items-center justify-center rounded-2xl text-base font-black ${
+                      isFree ? 'bg-emerald-100 text-emerald-700' : isLocked ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {ch.order_index || idx + 1}
+                  </div>
                 </div>
               </div>
             </motion.div>
           );
         })}
-        
+
         {chapters.length === 0 && (
-           <p className="text-center text-slate-400 font-bold py-8">باقي ماتزادو الدروس فهاد الموديل.</p>
+          <p className="py-8 text-center text-base font-bold text-slate-400">باقي ماتزادو الدروس فهاد الموديل.</p>
         )}
       </div>
 
-      {/* Paywall Modal */}
       <AnimatePresence>
         {selectedChapter && (
           <motion.div
@@ -222,27 +225,27 @@ export default function ModulePage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closePaywall}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md px-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-md"
           >
             <motion.div
               initial={{ opacity: 0, y: 18, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.96 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
+              transition={{ duration: 0.22 }}
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-lg overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl"
               dir="rtl"
             >
-              <div className="bg-[#0B132B] px-5 py-4 text-white">
+              <div className="bg-[#0F172A] px-5 py-4 text-white">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">فصل مدفوع 🔒</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">فتح الموديل 🔒</p>
                     <h3 className="mt-2 text-xl font-black leading-tight">{selectedChapter.title_ar}</h3>
                   </div>
                   <button
                     type="button"
                     onClick={closePaywall}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10 cursor-pointer"
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -258,25 +261,23 @@ export default function ModulePage() {
                     </div>
                     <div className="rounded-2xl bg-amber-100 px-3 py-2 text-right">
                       <p className="text-[10px] font-black uppercase tracking-wider text-amber-700">ثمن الاشتراك</p>
-                      <p className="text-xl font-black text-slate-900">{moduleData?.price} <span className="text-sm">DH</span></p>
+                      <p className="text-xl font-black text-slate-900">
+                        {moduleData?.price} <span className="text-sm">DH</span>
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="text-sm font-black text-slate-800">شنو غتستافد؟</h4>
+                  <h4 className="text-sm font-black text-slate-900">ما غتستافدوه عند الفتح؟</h4>
                   <ul className="space-y-2.5 text-sm font-bold text-slate-700">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                      <span>ولوج كامل لجميع الفصول والسلايدات</span>
+                      <span>جميع فصول الموديل بالسلايدات التفاعلية + كويزات وأفخاخ الامتحانات + الدخول لمجموعة واتساب مغلقة من 8 طلاب كحد أقصى بنات/أولاد للمراجعة والتمارين.</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                      <span>شرح مبسط بالدارجة مع أمثلة واقعية</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                      <span>كويزات وأفخاخ الامتحانات (Traps)</span>
+                      <span>طريقة الدفع السهلة والآمنة: ما كاينش خلاص أونلاين بالبطاقة! كتخلص غير فـ CashPlus أو تحويل بنكي، وتصور لينا الوصل فالواتساب، وحتى إلا ما عرفتيش تصاوب حساب حنا كنتكلفو ليك بكلشي خطوة بخطوة فالواتساب.</span>
                     </li>
                   </ul>
                 </div>
@@ -284,24 +285,21 @@ export default function ModulePage() {
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <button
                     type="button"
-                    onClick={handleWaitlist}
-                    className="flex-1 rounded-2xl bg-[#FFB800] px-4 py-3 text-sm font-black text-slate-950 shadow-md shadow-amber-200/70 transition hover:bg-[#f5ad00] cursor-pointer"
-                  >
-                    <span className="inline-flex items-center justify-center gap-2">
-                      <TicketCheck className="h-4 w-4" />
-                      <span>طلب التسجيل</span>
-                    </span>
-                  </button>
-                  {/* <button
-                    type="button"
                     onClick={handleWhatsApp}
-                    className="flex-1 rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-black text-slate-900 transition hover:bg-slate-200 cursor-pointer"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-emerald-200 transition hover:bg-emerald-500"
                   >
-                    <span className="inline-flex items-center justify-center gap-2">
-                      <MessageCircle className="h-4 w-4" />
-                      <span>تواصل عبر واتساب</span>
-                    </span>
-                  </button> */}
+                    <MessageCircle className="h-4 w-4" />
+                    <span>تواصل مباشرة بالواتساب</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleWaitlist}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[#FFB800] px-4 py-3 text-sm font-black text-slate-950 shadow-md shadow-amber-200/70 transition hover:bg-[#f5ad00]"
+                  >
+                    <TicketCheck className="h-4 w-4" />
+                    <span>الدخول لصفحة الانتظار</span>
+                  </button>
                 </div>
               </div>
             </motion.div>

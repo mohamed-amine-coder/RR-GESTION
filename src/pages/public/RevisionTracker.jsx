@@ -183,8 +183,8 @@ export default function RevisionTracker() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FBF8F1] text-slate-900 px-3.5 sm:px-6 py-6 md:py-10 select-none font-[family-name:var(--font-tajawal)]" dir="rtl">
-      <div className="max-w-2xl mx-auto space-y-4">
+    <div className="min-h-screen bg-[#FBFBF7] text-slate-900 px-4 sm:px-6 py-8 md:py-12 select-none font-[family-name:var(--font-tajawal)]" dir="rtl">
+      <div className="max-w-4xl mx-auto space-y-4">
 
         {/* 1. ستيكي نوت الفوقاني: مجموعات الدراسة المجانية */}
         <div className="bg-[#FEF08A]/90 border-2 border-[#FACC15] rounded-3xl p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3.5 relative overflow-hidden">
@@ -193,18 +193,18 @@ export default function RevisionTracker() {
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xs sm:text-sm font-black text-amber-950">
-                بغيتي تنضم لمجموعات دراسة مجانية (بنات / ولاد)؟ 👥
+              <h2 className="text-sm sm:text-base font-black text-amber-950">
+                مجموعات مراجعة مغلقة (8 طلبة كحد أقصى - بنات بوحدهم / ولاد بوحدهم)
               </h2>
-              <p className="text-[11px] font-bold text-amber-900/85 mt-0.5">
-                كروبات واتساب مصغرة ومعزولة باش تراجعو التمارين مجموعين.
+              <p className="text-sm font-bold text-amber-900/85 mt-0.5 leading-relaxed">
+                كنشاركو فيها الملخصات والتمارين باش توجد للامتحان بأريحية وبلا تشتت.
               </p>
             </div>
           </div>
 
           <Link
             to="/waitlist"
-            className="w-full sm:w-auto px-4 py-2.5 bg-amber-950 hover:bg-slate-900 text-[#FEF08A] font-black text-xs rounded-2xl transition flex items-center justify-center gap-1.5 shrink-0 shadow-xs active:scale-95"
+            className="w-full sm:w-auto px-4 py-2.5 bg-amber-950 hover:bg-slate-900 text-[#FEF08A] font-black text-sm rounded-2xl transition flex items-center justify-center gap-1.5 shrink-0 shadow-xs active:scale-95"
           >
             <MessageCircle className="w-3.5 h-3.5 fill-current" />
             <span>صيفط لينا ميساج</span>
@@ -216,14 +216,14 @@ export default function RevisionTracker() {
           <div className="bg-[#FFFBEB] border-2 border-[#FDE68A] rounded-3xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-2.5 text-right w-full sm:w-auto">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
-              <p className="text-xs font-bold text-amber-950">
-                بلا  انشاء حساب، هاد التقدم غيتمسح كلو بعد ما الصفحة 
+              <p className="text-sm font-bold text-amber-950">
+                تنبيه: التقدم ديالك دابا محفوظ غير فهاد المتصفح مؤقتاً. سجل دخولك بحساب Google باش يبقى تقدمك محفوظ ديما!
               </p>
             </div>
 
             <Link
               to="/login"
-              className="w-full sm:w-auto px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 shrink-0 active:scale-95"
+              className="w-full sm:w-auto px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 shrink-0 active:scale-95"
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>أنشئ حسابك لحفظ دائم</span>
@@ -238,17 +238,17 @@ export default function RevisionTracker() {
               <Pin className="w-5 h-5 rotate-[-20deg]" />
             </div>
             <div>
-              <h1 className="text-base sm:text-lg font-black text-slate-950">
+              <h1 className="text-lg sm:text-xl font-black text-slate-950">
                 دفتر تتبع المراجعة 📌
               </h1>
-              <p className="text-[11px] font-bold text-slate-500">
+              <p className="text-sm font-bold text-slate-500">
                 كليكي على الموديل باش تفتح لائحة الدروس ديالو
               </p>
             </div>
           </div>
 
           <div className="bg-[#FBF6EA] border border-[#E7DFCB] px-3.5 py-2 rounded-2xl text-center shrink-0">
-            <span className="text-[10px] font-bold text-slate-500 block">راجعتي</span>
+            <span className="text-xs font-bold text-slate-500 block">راجعتي</span>
             <span className="text-sm sm:text-base font-black text-slate-900 font-mono" dir="ltr">
               {completedCount} / {activeChapterCount}
             </span>
@@ -284,7 +284,7 @@ export default function RevisionTracker() {
                       <h2 className="text-sm sm:text-base font-black text-slate-900 truncate" dir="ltr" style={{ textAlign: 'right' }}>
                         {module.title}
                       </h2>
-                      <span className="text-[10px] font-black text-slate-500">
+                      <span className="text-xs font-black text-slate-500">
                         {module.semestre} • {moduleChapters.length} دروس
                       </span>
                     </div>
@@ -357,19 +357,19 @@ export default function RevisionTracker() {
 
                                 <div className="flex items-center gap-1.5 mt-0.5">
                                   {isDone ? (
-                                    <span className="text-[10px] font-black text-emerald-700">
+                                    <span className="text-xs font-black text-emerald-700">
                                       تمت المراجعة ✓
                                     </span>
                                   ) : chap.is_free ? (
-                                    <span className="text-[10px] font-black text-emerald-800 bg-emerald-100/80 px-2 py-0.2 rounded-md">
-                                      مجاني
+                                    <span className="text-xs font-black text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                                      🎁 درس مجاني — جرب دابا
                                     </span>
                                   ) : !hasAccess ? (
-                                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100/70 px-2 py-0.2 rounded-md">
-                                      تواصل معنا لفتحه 🔒
+                                    <span className="text-xs font-bold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-md">
+                                      🔒 فصل خاص بالمشتركين (تفعيل عبر CashPlus / واتساب)
                                     </span>
                                   ) : (
-                                    <span className="text-[10px] font-bold text-slate-400">
+                                    <span className="text-xs font-bold text-slate-400">
                                       باقي ما تراجع
                                     </span>
                                   )}
@@ -379,19 +379,29 @@ export default function RevisionTracker() {
 
                             {/* زر التصفح */}
                             {hasAccess ? (
-                              <Link
-                                to={`/viewer/${chap.id}`}
-                                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-black rounded-xl transition flex items-center gap-1 shrink-0"
-                              >
-                                <span>قرا</span>
-                                <ArrowUpLeft className="w-3 h-3" />
-                              </Link>
+                              chap.is_free ? (
+                                <Link
+                                  to={`/viewer/${chap.id}`}
+                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl transition flex items-center gap-1 shrink-0"
+                                >
+                                  <span>ابدا الدرس</span>
+                                  <ArrowUpLeft className="w-3 h-3" />
+                                </Link>
+                              ) : (
+                                <Link
+                                  to={`/viewer/${chap.id}`}
+                                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-black rounded-xl transition flex items-center gap-1 shrink-0"
+                                >
+                                  <span>قرا</span>
+                                  <ArrowUpLeft className="w-3 h-3" />
+                                </Link>
+                              )
                             ) : (
                               <Link
                                 to="/waitlist"
                                 className="px-3 py-1.5 bg-[#FFB800] hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl transition flex items-center gap-1 shrink-0 shadow-2xs"
                               >
-                                <span>افتح</span>
+                                <span>افتح الفصل 🔒</span>
                                 <Lock className="w-3 h-3" />
                               </Link>
                             )}

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ArrowLeft, UserPlus, Flame, BellRing, Layers, CheckCircle2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
 import { motion } from 'framer-motion';
+import { ArrowLeft, BellRing, Flame, Layers, MessageCircle, UserPlus } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import rrTeamImg from '../../assets/rr-team.png';
 import LoadingScreen from '../../components/common/LoadingScreen';
 
@@ -13,11 +13,7 @@ export default function Modules() {
 
   useEffect(() => {
     const fetchModules = async () => {
-      const { data } = await supabase
-        .from('modules')
-        .select('*')
-        .order('order_index');
-        
+      const { data } = await supabase.from('modules').select('*').order('order_index');
       if (data) setModules(data);
       setLoading(false);
     };
@@ -25,15 +21,12 @@ export default function Modules() {
     fetchModules();
   }, []);
 
-  const filteredModules = selectedSemestre === 'ALL' 
-    ? modules 
-    : modules.filter(m => m.semestre === selectedSemestre);
+  const filteredModules = selectedSemestre === 'ALL' ? modules : modules.filter((m) => m.semestre === selectedSemestre);
 
-  // حساب عدد المقررات في كل فصل باش نبينوه للعميل (إيحاء بالوفرة)
   const counts = {
-    S1: modules.filter(m => m.semestre === 'S1').length,
-    S2: modules.filter(m => m.semestre === 'S2').length,
-    EGTS: modules.filter(m => m.semestre === 'EGTS').length,
+    S1: modules.filter((m) => m.semestre === 'S1').length,
+    S2: modules.filter((m) => m.semestre === 'S2').length,
+    EGTS: modules.filter((m) => m.semestre === 'EGTS').length,
     ALL: modules.length,
   };
 
@@ -42,153 +35,140 @@ export default function Modules() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 select-none pb-24 font-[family-name:var(--font-tajawal)]" dir="rtl">
-      
-      {/* 1. HERO SECTION */}
-      <section className="relative bg-[#0B1120] text-white pt-10 pb-16 px-4 overflow-hidden border-b border-amber-500/20">
-        <div className="absolute top-0 right-1/4 w-[450px] h-[250px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
-        
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-          <div className="text-center md:text-right flex-1">
-            
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-xs font-black text-amber-300 mb-3 backdrop-blur-md">
-              <Flame className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
-              <span>منصة التكوين الاحترافي</span>
+    <div className="min-h-screen bg-[#FBFBF7] text-slate-900 select-none pb-24" dir="rtl">
+      <section className="relative overflow-hidden bg-[#0F172A] py-10 md:py-14">
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-transparent to-emerald-500/10" />
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
+            <div className="flex-1 text-center md:text-right">
+              <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-[11px] font-black text-amber-300">
+                <Flame className="h-3.5 w-3.5 text-amber-400" />
+                <span>منصة التكوين الاحترافي</span>
+              </div>
+
+              <h1 className="mt-4 text-2xl font-black leading-tight text-white sm:text-3xl md:text-4xl">
+                استكشف جميع الموديلات الدراسية
+              </h1>
+
+              <p className="mx-auto mt-3 max-w-xl text-sm font-bold leading-relaxed text-slate-300 md:mx-0 sm:text-base">
+                اختر الفصل المناسب لك وابدأ رحلتك بخطوات واضحة ومحتوى عملي ومدروس بالدارجة والفرنسية.
+              </p>
             </div>
-            
-            <h1 className="text-2xl md:text-4xl font-black tracking-tight leading-tight mb-2">
-              استكشف جميع المقررات الدراسية
-            </h1>
-            <p className="text-slate-300 text-xs md:text-sm font-medium leading-relaxed max-w-lg">
-              اختر الفصل الدراسي المناسب لك وابدأ رحلة التفوق الأكاديمي بخطوات واضحة ومحتوى مركز.
-            </p>
-          </div>
-          
-          <div className="hidden md:block shrink-0">
-            <img 
-              src={rrTeamImg} 
-              alt="RR Team" 
-              className="w-28 h-auto rounded-2xl border border-amber-400/20 shadow-2xl opacity-90"
-            />
+
+            <div className="hidden shrink-0 md:block">
+              <img src={rrTeamImg} alt="RR Team" className="h-auto w-28 rounded-2xl border border-white/10 shadow-2xl" />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 2. PROMINENT FILTER BAR (STICKY & HIGHLY VISIBLE) */}
-      <div className="sticky top-4 z-40 max-w-4xl mx-auto px-4 -mt-6">
-        <div className="bg-slate-950/95 text-white backdrop-blur-xl border-2 border-amber-400/40 shadow-2xl shadow-slate-950/30 rounded-2xl p-3 md:p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          
-          <div className="flex items-center gap-2.5 text-xs font-black text-amber-400 px-2">
-            <div className="w-7 h-7 rounded-xl bg-amber-400/10 flex items-center justify-center border border-amber-400/30">
-              <Layers className="w-4 h-4 text-amber-400" />
+      <div className="sticky top-4 z-40 mx-auto max-w-5xl px-4 sm:px-6 -mt-6">
+        <div className="rounded-[1.75rem] border border-slate-200 bg-slate-950/95 p-3 text-white shadow-2xl shadow-slate-950/20 backdrop-blur-xl md:p-4">
+          <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+            <div className="flex items-center gap-2.5 px-2 text-xs font-black text-amber-300">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10">
+                <Layers className="h-4 w-4 text-amber-300" />
+              </div>
+              <span>تصفح حسب الفصل:</span>
             </div>
-            <span>تصفح حسب الفصل:</span>
-          </div>
 
-          <div className="grid grid-cols-2 sm:flex w-full sm:w-auto p-1 bg-slate-900 border border-slate-800 rounded-xl gap-1">
-            {[
-              { id: 'S1', label: ' الدورة الأولى (S1)', count: counts.S1 },
-              { id: 'S2', label: 'الدورة الثانية (S2)', count: counts.S2 },
-              { id: 'EGTS', label: 'مقررات EGTS', count: counts.EGTS },
-              { id: 'ALL', label: 'الكل', count: counts.ALL }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setSelectedSemestre(tab.id)}
-                className={`whitespace-nowrap px-3.5 py-2 rounded-lg text-xs font-black transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 ${
-                  selectedSemestre === tab.id
-                    ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/20 scale-[1.02]'
-                    : 'text-slate-300 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <span>{tab.label}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                  selectedSemestre === tab.id ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'
-                }`}>
-                  {tab.count}
-                </span>
-              </button>
-            ))}
+            <div className="grid w-full gap-1 rounded-xl border border-slate-800 bg-slate-900 p-1 sm:flex sm:w-auto">
+              {[
+                { id: 'S1', label: 'الدورة الأولى (S1)', count: counts.S1 },
+                { id: 'S2', label: 'الدورة الثانية (S2)', count: counts.S2 },
+                { id: 'EGTS', label: 'مقررات EGTS', count: counts.EGTS },
+                { id: 'ALL', label: 'الكل', count: counts.ALL },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setSelectedSemestre(tab.id)}
+                  className={`flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-[11px] font-black transition-all ${
+                    selectedSemestre === tab.id
+                      ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/20'
+                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] ${
+                      selectedSemestre === tab.id ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
-
         </div>
       </div>
 
-      {/* 3. DEMAND-DRIVEN MODULE CARDS */}
-      <main className="max-w-4xl mx-auto px-4 mt-6 relative z-20 space-y-3">
+      <main className="relative z-20 mx-auto mt-6 max-w-5xl space-y-3 px-4 sm:px-6">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-right text-sm font-black text-emerald-900 shadow-sm">
+          💡 كل موديل متاح فيه الفصل الأول مجاناً للتجربة المباشرة بلا تسجيل الدخول — كليكي على الموديل وبدا تقرا!
+        </div>
+
         {filteredModules.map((mod, idx) => {
           const isAvailable = mod.status === 'active';
-          
+
           return (
             <motion.div
               key={mod.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, delay: idx * 0.02 }}
-              className={`group bg-white rounded-2xl p-5 border transition-all duration-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
-                isAvailable 
-                  ? 'border-slate-200/90 hover:border-amber-400 shadow-sm hover:shadow-md' 
-                  : 'border-slate-200/60 bg-slate-50/60 opacity-85'
+              className={`flex flex-col items-start justify-between gap-4 rounded-[1.75rem] border p-5 md:flex-row md:items-center ${
+                isAvailable
+                  ? 'border-emerald-200 bg-white shadow-lg shadow-emerald-50'
+                  : 'border-slate-200 bg-slate-50/80 opacity-90'
               }`}
             >
-              
-              {/* Content block */}
-              <div className="flex-1 w-full text-right">
-                
-                {/* Meta details */}
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <span className="text-[11px] font-black px-2.5 py-0.5 rounded-md bg-slate-900 text-amber-300">
+              <div className="w-full flex-1 text-right">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-md bg-slate-900 px-2.5 py-0.5 text-[11px] font-black text-amber-300">
                     {mod.semestre}
                   </span>
-                  
+
                   {isAvailable ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[11px] font-black">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-black text-emerald-700">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
                       <span>متاح الآن</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-sky-50 border border-sky-200 text-sky-700 text-[11px] font-black">
-                      <UserPlus className="w-3 h-3 text-sky-500" />
+                    <span className="inline-flex items-center gap-1 rounded-md border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[11px] font-black text-sky-700">
+                      <UserPlus className="h-3 w-3 text-sky-500" />
                       <span>التسجيل مفتوح</span>
                     </span>
-
                   )}
                 </div>
 
-                {/* Title */}
-                <h2 
-                  className="text-lg md:text-xl font-black text-slate-950 tracking-tight leading-snug mb-1" 
-                  dir="ltr"
-                  style={{ textAlign: 'right' }}
-                >
+                <h2 className="text-lg font-black leading-snug text-slate-900 md:text-xl" dir="ltr" style={{ textAlign: 'right' }}>
                   {mod.title}
                 </h2>
-                
-                {/* Description */}
+
                 {mod.description && (
-                  <p className="text-xs font-semibold text-slate-500 line-clamp-1 leading-relaxed">
-                    {mod.description}
-                  </p>
+                  <p className="mt-1 text-sm font-bold leading-relaxed text-slate-500">{mod.description}</p>
                 )}
               </div>
 
-              {/* Action (CTA) */}
-              <div className="w-full md:w-auto shrink-0 flex items-center justify-end pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+              <div className="w-full shrink-0 border-t border-slate-100 pt-2 md:w-auto md:border-0 md:pt-0">
                 {isAvailable ? (
                   <Link
                     to={`/module/${mod.id}`}
-                    className="w-full md:w-auto px-5 py-2.5 bg-slate-950 hover:bg-amber-400 hover:text-slate-950 text-white text-xs font-black rounded-xl transition-all duration-150 flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-black text-white shadow-md shadow-emerald-200 transition hover:bg-emerald-500 md:w-auto"
                   >
-                    <span>اكتشف الموديل</span>
-                    <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" />
+                    <span>دخل جرب الدرس المجاني ⬅</span>
+                    <ArrowLeft className="h-4 w-4" />
                   </Link>
                 ) : (
                   <Link
                     to={`/waitlist?offer=single_module&module=${mod.id}`}
-                    className="w-full md:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300/80 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-slate-800 ring-1 ring-slate-200 transition hover:bg-slate-100 md:w-auto"
                   >
-                    <BellRing className="w-3.5 h-3.5 text-amber-600" />
-                    <span>انضم لقائمة الانتظار</span>
+                    <BellRing className="h-4 w-4 text-amber-600" />
+                    <span>طلب هذا الموديل عبر واتساب</span>
+                    <MessageCircle className="h-4 w-4 text-emerald-600" />
                   </Link>
                 )}
               </div>
@@ -197,9 +177,9 @@ export default function Modules() {
         })}
 
         {filteredModules.length === 0 && (
-          <div className="text-center py-14 bg-white rounded-2xl border border-slate-200 shadow-xs">
-            <Layers className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="text-slate-500 font-bold text-xs">تأكد من اتصالك بالإنترنت</p>
+          <div className="rounded-[1.75rem] border border-slate-200 bg-white py-14 text-center shadow-sm">
+            <Layers className="mx-auto mb-2 h-8 w-8 text-slate-300" />
+            <p className="text-sm font-bold text-slate-500">تأكد من اتصالك بالإنترنت</p>
           </div>
         )}
       </main>
