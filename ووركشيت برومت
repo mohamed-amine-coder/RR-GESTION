@@ -33,10 +33,7 @@
 6. "table_block": لتقديم معطيات أو جداول.
    {"type": "table_block", "title": "...", "headers": ["..."], "rows": [["..."]]}
 
-7. "fill_in_blank": أتمم الفراغ بكلمات مفتاحية.
-   {"type": "fill_in_blank", "title": "...", "content": "..."}
-
-8. "quiz_block": سؤال خيارات متعددة مع فخ.
+7. "quiz_block": سؤال خيارات متعددة مع فخ.
    {"type": "quiz_block", "title": "...", "question": "...", "options": ["...", "..."]}
 
 قواعد المحتوى (Pedagogy):
